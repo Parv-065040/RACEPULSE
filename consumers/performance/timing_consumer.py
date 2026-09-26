@@ -2,10 +2,12 @@
 Performance consumer - Parv's ownership.
 Reads race.timing, validates against the event contract, computes
 Lap Pace Delta KPI per car, persists each result to MySQL.
+Invalid events are routed to system.dlq instead of being dropped.
 """
 import json
 from kafka import KafkaConsumer
 from engine.formulas.lap_pace_delta import compute_lap_pace_delta
+from engine.validation.dlq import send_to_dlq
 from database.writer import write_kpi_result
 
 REQUIRED_FIELDS = {
@@ -43,7 +45,8 @@ def main():
         event = message.value
         errors = validate(event)
         if errors:
-            print(f"INVALID event from key={message.key}: {errors}")
+            print(f"INVALID event from key={message.key}: {errors}  -> sent to system.dlq")
+            send_to_dlq("race.timing", message.key, event, errors)
             continue
 
         kpi = compute_lap_pace_delta(event["car_id"], event["lap_time_ms"])
