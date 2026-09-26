@@ -1,11 +1,12 @@
-﻿"""
+"""
 Performance consumer - Parv's ownership.
 Reads race.timing, validates against the event contract, computes
-Lap Pace Delta KPI per car, prints each result.
+Lap Pace Delta KPI per car, persists each result to MySQL.
 """
 import json
 from kafka import KafkaConsumer
 from engine.formulas.lap_pace_delta import compute_lap_pace_delta
+from database.writer import write_kpi_result
 
 REQUIRED_FIELDS = {
     "event_id": str,
@@ -46,9 +47,10 @@ def main():
             continue
 
         kpi = compute_lap_pace_delta(event["car_id"], event["lap_time_ms"])
+        write_kpi_result(kpi, event)
         print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
               f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
-              f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}")
+              f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}  [saved]")
 
 if __name__ == "__main__":
     main()
