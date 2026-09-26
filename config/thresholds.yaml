@@ -1,0 +1,14 @@
+lap_pace_delta:
+  kpi_id: KPI-001
+  name: Lap Pace Delta
+  description: "Difference between a car's current lap time and its rolling best lap time for the race so far."
+  formula: "current_lap_time_ms - best_lap_time_ms_so_far"
+  input_fields:
+    - lap_time_ms
+  window: "per-lap (no time window; cumulative best-so-far)"
+  unit: milliseconds
+  severity_thresholds:
+    warning_ms: 500
+    critical_ms: 1500
+  enabled: true
+  version: 1
