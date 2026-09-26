@@ -1,10 +1,11 @@
 ﻿"""
 Performance consumer - Parv's ownership.
-Reads race.timing, validates against the event contract, prints each event.
-No KPI logic yet - that comes in the next step.
+Reads race.timing, validates against the event contract, computes
+Lap Pace Delta KPI per car, prints each result.
 """
 import json
 from kafka import KafkaConsumer
+from engine.formulas.lap_pace_delta import compute_lap_pace_delta
 
 REQUIRED_FIELDS = {
     "event_id": str,
@@ -17,7 +18,6 @@ REQUIRED_FIELDS = {
 }
 
 def validate(event: dict) -> list[str]:
-    """Return a list of validation errors; empty list means valid."""
     errors = []
     for field, expected_type in REQUIRED_FIELDS.items():
         if field not in event:
@@ -44,7 +44,11 @@ def main():
         if errors:
             print(f"INVALID event from key={message.key}: {errors}")
             continue
-        print(f"OK  car={event['car_id']}  lap={event['lap_number']}  lap_time_ms={event['lap_time_ms']}  partition={message.partition}")
+
+        kpi = compute_lap_pace_delta(event["car_id"], event["lap_time_ms"])
+        print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
+              f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
+              f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}")
 
 if __name__ == "__main__":
     main()
