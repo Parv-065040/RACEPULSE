@@ -1,12 +1,14 @@
 """
 Performance consumer - Parv's ownership.
 Reads race.timing, validates against the event contract, computes
-Lap Pace Delta KPI per car, persists each result to MySQL.
+Lap Pace Delta KPI per car, persists each result to MySQL, and
+raises an alert (analytics.alerts + alerts table) when severity warrants it.
 Invalid events are routed to system.dlq instead of being dropped.
 """
 import json
 from kafka import KafkaConsumer
 from engine.formulas.lap_pace_delta import compute_lap_pace_delta
+from engine.alerts.alert_engine import raise_alert_if_needed
 from engine.validation.dlq import send_to_dlq
 from database.writer import write_kpi_result
 
@@ -51,9 +53,16 @@ def main():
 
         kpi = compute_lap_pace_delta(event["car_id"], event["lap_time_ms"])
         write_kpi_result(kpi, event)
-        print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
-              f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
-              f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}  [saved]")
+
+        if kpi["severity"] != "none":
+            raise_alert_if_needed(kpi, event)
+            print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
+                  f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
+                  f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}  [saved] [ALERT RAISED]")
+        else:
+            print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
+                  f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
+                  f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}  [saved]")
 
 if __name__ == "__main__":
     main()
