@@ -19,6 +19,7 @@ class ScenarioConfig:
     name: ScenarioType
     rain_intensity: float = 0.0
     tyre_degradation_per_lap: float = 0.02
+    safety_car_gap_factor: float = 1.0
 
 
 def create_scenario(
@@ -36,6 +37,12 @@ def create_scenario(
         return ScenarioConfig(
             name=scenario,
             tyre_degradation_per_lap=0.08,
+        )
+
+    if scenario == ScenarioType.SAFETY_CAR:
+        return ScenarioConfig(
+            name=scenario,
+            safety_car_gap_factor=0.5,
         )
 
     return ScenarioConfig(

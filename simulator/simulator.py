@@ -40,6 +40,23 @@ class RaceSimulator:
                     self.scenario.tyre_degradation_per_lap
                 )
 
+        if self.scenario.name == ScenarioType.SAFETY_CAR:
+            self._apply_safety_car()
+
+    def _apply_safety_car(self) -> None:
+        """
+        Compress gaps between cars and temporarily stop
+        normal gap progression.
+        """
+
+        for car in self.race.cars.values():
+            car.gap_to_leader_ms = int(
+                car.gap_to_leader_ms
+                * self.scenario.safety_car_gap_factor
+            )
+
+            car.gap_change_ms_per_lap = 0
+
     def advance_one_lap(self):
         """
         Advance every car by one simulated lap.
@@ -89,7 +106,7 @@ def create_simulator(
 
 if __name__ == "__main__":
     simulator = create_simulator(
-        ScenarioType.TYRE_CRISIS
+        ScenarioType.SAFETY_CAR
     )
 
     print(
@@ -97,15 +114,23 @@ if __name__ == "__main__":
         f"{simulator.scenario.name.value}"
     )
 
-    print(
-        f"Tyre degradation per lap: "
-        f"{simulator.scenario.tyre_degradation_per_lap}"
-    )
+    print()
+
+    print("Initial compressed gaps:")
+
+    for car in simulator.race.cars.values():
+        print(
+            car.car_id,
+            "gap=",
+            car.gap_to_leader_ms,
+            "gap_change=",
+            car.gap_change_ms_per_lap,
+        )
 
     print()
 
     for lap_number, cars in enumerate(
-        simulator.advance_laps(5),
+        simulator.advance_laps(3),
         start=1,
     ):
         print(f"LAP {lap_number}")
@@ -117,12 +142,10 @@ if __name__ == "__main__":
                 car.lap_number,
                 "lap_time_ms=",
                 car.lap_time_ms,
-                "tyre_age=",
-                car.tyre.age_laps,
-                "wear=",
-                round(car.tyre.wear, 2),
-                "grip=",
-                round(car.tyre.grip, 2),
+                "gap=",
+                car.gap_to_leader_ms,
+                "gap_change=",
+                car.gap_change_ms_per_lap,
             )
 
         print()
