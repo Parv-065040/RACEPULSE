@@ -2,6 +2,7 @@ import json
 
 from kafka import KafkaProducer
 
+from simulator.scenario import ScenarioType, create_scenario
 from simulator.simulator import RaceSimulator
 from simulator.timing_event import build_timing_event
 
@@ -30,8 +31,19 @@ def publish_timing_event(
     )
 
 
-def main() -> None:
-    simulator = RaceSimulator()
+def run_timing_producer(
+    scenario: ScenarioType = ScenarioType.NORMAL_RACE,
+) -> None:
+    """
+    Run the timing producer for the selected race scenario.
+
+    The timing event structure remains unchanged.
+    """
+
+    simulator = RaceSimulator(
+        scenario=create_scenario(scenario),
+    )
+
     producer = create_producer()
 
     try:
@@ -58,6 +70,12 @@ def main() -> None:
 
     finally:
         producer.close()
+
+
+def main() -> None:
+    run_timing_producer(
+        scenario=ScenarioType.NORMAL_RACE,
+    )
 
 
 if __name__ == "__main__":
