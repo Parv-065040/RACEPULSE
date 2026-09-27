@@ -17,6 +17,7 @@ class CarState:
     position: int = 1
     degradation_ms_per_lap: int = 100
     gap_change_ms_per_lap: int = 0
+    is_running: bool = True
     tyre: TyreState = field(default_factory=create_default_tyre)
 
 
@@ -30,6 +31,12 @@ class RaceState:
 
     def get_car(self, car_id: str) -> CarState:
         return self.cars[car_id]
+
+    def fail_car(self, car_id: str) -> CarState:
+        """Mark a car as no longer running."""
+        car = self.get_car(car_id)
+        car.is_running = False
+        return car
 
     def calculate_effective_grip(self, car: CarState) -> float:
         return max(
@@ -75,6 +82,9 @@ class RaceState:
     def simulate_next_lap(self, car_id: str) -> CarState:
         car = self.get_car(car_id)
 
+        if not car.is_running:
+            return car
+
         car.tyre.complete_lap()
 
         lap_time_ms = self.calculate_next_lap_time(car)
@@ -94,7 +104,10 @@ class RaceState:
     def simulate_all_cars_next_lap(self) -> list[CarState]:
         updated_cars = []
 
-        for car_id in self.cars:
+        for car_id, car in self.cars.items():
+            if not car.is_running:
+                continue
+
             updated_car = self.simulate_next_lap(car_id)
             updated_cars.append(updated_car)
 

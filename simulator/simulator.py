@@ -23,6 +23,7 @@ class RaceSimulator:
     ) -> None:
         self.race = race or RaceState.create_default()
         self.scenario = scenario or create_scenario()
+        self.current_lap = 0
 
         self._apply_scenario()
 
@@ -84,13 +85,37 @@ class RaceSimulator:
                         -self.scenario.close_battle_gap_change_ms
                     )
 
+    def _apply_mechanical_failure(self) -> None:
+        """Apply the configured mechanical failure at the selected lap."""
+
+        if (
+            self.scenario.name
+            != ScenarioType.MECHANICAL_FAILURE
+        ):
+            return
+
+        if self.current_lap != self.scenario.mechanical_failure_lap:
+            return
+
+        car_id = self.scenario.mechanical_failure_car_id
+
+        if car_id in self.race.cars:
+            self.race.fail_car(car_id)
+
     def advance_one_lap(self):
         """
-        Advance every car by one simulated lap.
+        Advance every running car by one simulated lap.
+
+        A configured mechanical failure is applied before
+        the affected lap is simulated.
 
         Returns:
-            List of updated CarState objects.
+            List of running CarState objects.
         """
+        self.current_lap += 1
+
+        self._apply_mechanical_failure()
+
         return self.race.simulate_all_cars_next_lap()
 
     def advance_laps(self, laps: int):
@@ -133,7 +158,7 @@ def create_simulator(
 
 if __name__ == "__main__":
     simulator = create_simulator(
-        ScenarioType.CLOSE_BATTLE
+        ScenarioType.MECHANICAL_FAILURE
     )
 
     print(
@@ -141,17 +166,15 @@ if __name__ == "__main__":
         f"{simulator.scenario.name.value}"
     )
 
-    print()
-    print("Initial close-battle gaps:")
+    print(
+        f"Failure car: "
+        f"{simulator.scenario.mechanical_failure_car_id}"
+    )
 
-    for car in simulator.race.cars.values():
-        print(
-            car.car_id,
-            "gap=",
-            car.gap_to_leader_ms,
-            "gap_change=",
-            car.gap_change_ms_per_lap,
-        )
+    print(
+        f"Failure lap: "
+        f"{simulator.scenario.mechanical_failure_lap}"
+    )
 
     print()
 
@@ -168,10 +191,21 @@ if __name__ == "__main__":
                 car.lap_number,
                 "lap_time_ms=",
                 car.lap_time_ms,
-                "gap=",
-                car.gap_to_leader_ms,
-                "gap_change=",
-                car.gap_change_ms_per_lap,
+                "running=",
+                car.is_running,
             )
+
+        failed_car = simulator.race.get_car(
+            simulator.scenario.mechanical_failure_car_id
+        )
+
+        print(
+            "CAR_03 status:",
+            "RUNNING"
+            if failed_car.is_running
+            else "FAILED",
+            "| last_lap=",
+            failed_car.lap_number,
+        )
 
         print()

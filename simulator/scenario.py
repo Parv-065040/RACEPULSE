@@ -22,6 +22,8 @@ class ScenarioConfig:
     safety_car_gap_factor: float = 1.0
     close_battle_gap_ms: int = 1000
     close_battle_gap_change_ms: int = 100
+    mechanical_failure_car_id: str = "CAR_03"
+    mechanical_failure_lap: int = 3
 
 
 def create_scenario(
@@ -52,6 +54,13 @@ def create_scenario(
             name=scenario,
             close_battle_gap_ms=1000,
             close_battle_gap_change_ms=100,
+        )
+
+    if scenario == ScenarioType.MECHANICAL_FAILURE:
+        return ScenarioConfig(
+            name=scenario,
+            mechanical_failure_car_id="CAR_03",
+            mechanical_failure_lap=3,
         )
 
     return ScenarioConfig(
