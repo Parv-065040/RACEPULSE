@@ -8,6 +8,7 @@ from simulator.timing_event import build_timing_event
 
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 TIMING_TOPIC = "race.timing"
+NUMBER_OF_LAPS = 3
 
 
 def create_producer() -> KafkaProducer:
@@ -34,17 +35,23 @@ def main() -> None:
     producer = create_producer()
 
     try:
-        cars = race.simulate_all_cars_next_lap()
+        for lap_number in range(1, NUMBER_OF_LAPS + 1):
+            cars = race.simulate_all_cars_next_lap()
 
-        for car in cars:
-            event = build_timing_event(car)
+            for car in cars:
+                event = build_timing_event(car)
 
-            publish_timing_event(
-                producer=producer,
-                event=event,
-            )
+                publish_timing_event(
+                    producer=producer,
+                    event=event,
+                )
 
-            print(f"Published timing event: {event}")
+                print(
+                    f"Published timing event: "
+                    f"{event['car_id']} | "
+                    f"lap={event['lap_number']} | "
+                    f"lap_time_ms={event['lap_time_ms']}"
+                )
 
         producer.flush()
 
