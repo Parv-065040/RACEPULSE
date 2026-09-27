@@ -17,10 +17,21 @@ class ScenarioType(str, Enum):
 @dataclass(frozen=True)
 class ScenarioConfig:
     name: ScenarioType
+    rain_intensity: float = 0.0
 
 
 def create_scenario(
     scenario: ScenarioType = ScenarioType.NORMAL_RACE,
 ) -> ScenarioConfig:
     """Create a race scenario configuration."""
-    return ScenarioConfig(name=scenario)
+
+    if scenario == ScenarioType.RAIN:
+        return ScenarioConfig(
+            name=scenario,
+            rain_intensity=0.7,
+        )
+
+    return ScenarioConfig(
+        name=scenario,
+        rain_intensity=0.0,
+    )

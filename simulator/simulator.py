@@ -1,4 +1,10 @@
-from simulator.scenario import ScenarioConfig, ScenarioType, create_scenario
+from copy import deepcopy
+
+from simulator.scenario import (
+    ScenarioConfig,
+    ScenarioType,
+    create_scenario,
+)
 from simulator.state import RaceState
 
 
@@ -18,12 +24,22 @@ class RaceSimulator:
         self.race = race or RaceState.create_default()
         self.scenario = scenario or create_scenario()
 
+        self._apply_scenario()
+
+    def _apply_scenario(self) -> None:
+        """Apply the configured scenario to the race state."""
+
+        if self.scenario.name == ScenarioType.RAIN:
+            self.race.weather.update(
+                self.scenario.rain_intensity
+            )
+
     def advance_one_lap(self):
         """
         Advance every car by one simulated lap.
 
         Returns:
-            list of updated CarState objects.
+            List of updated CarState objects.
         """
         return self.race.simulate_all_cars_next_lap()
 
@@ -35,7 +51,7 @@ class RaceSimulator:
             laps: Number of laps to simulate.
 
         Returns:
-            List of lists containing the car states for each lap.
+            List of independent snapshots for each lap.
         """
         if laps < 1:
             raise ValueError("laps must be at least 1")
@@ -44,7 +60,11 @@ class RaceSimulator:
 
         for _ in range(laps):
             cars = self.advance_one_lap()
-            history.append(cars)
+
+            # Store independent snapshots so later
+            # simulation steps cannot modify earlier laps.
+            snapshot = [deepcopy(car) for car in cars]
+            history.append(snapshot)
 
         return history
 
@@ -53,15 +73,29 @@ def create_simulator(
     scenario: ScenarioType = ScenarioType.NORMAL_RACE,
 ) -> RaceSimulator:
     """Create a simulator with the selected race scenario."""
+
     return RaceSimulator(
         scenario=create_scenario(scenario),
     )
 
 
 if __name__ == "__main__":
-    simulator = create_simulator(ScenarioType.NORMAL_RACE)
+    simulator = create_simulator(ScenarioType.RAIN)
 
     print(f"Scenario: {simulator.scenario.name.value}")
+    print(
+        f"Rain intensity: "
+        f"{simulator.race.weather.rain_intensity}"
+    )
+    print(
+        f"Track wetness: "
+        f"{simulator.race.weather.track_wetness}"
+    )
+    print(
+        f"Track grip: "
+        f"{simulator.race.weather.track_grip}"
+    )
+    print()
 
     for lap_number, cars in enumerate(
         simulator.advance_laps(3),
@@ -79,7 +113,10 @@ if __name__ == "__main__":
                 "tyre_age=",
                 car.tyre.age_laps,
                 "track_grip=",
-                round(simulator.race.weather.track_grip, 2),
+                round(
+                    simulator.race.weather.track_grip,
+                    2,
+                ),
             )
 
         print()
