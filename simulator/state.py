@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field, replace
 
 from simulator.tyre_state import TyreState, create_default_tyre
+from simulator.weather_state import WeatherState, create_default_weather
 
 
 @dataclass
@@ -18,6 +19,7 @@ class CarState:
 @dataclass
 class RaceState:
     cars: dict[str, CarState] = field(default_factory=dict)
+    weather: WeatherState = field(default_factory=create_default_weather)
 
     def add_car(self, car: CarState) -> None:
         self.cars[car.car_id] = car
@@ -84,7 +86,9 @@ class RaceState:
 
     @classmethod
     def create_default(cls) -> "RaceState":
-        race = cls()
+        race = cls(
+            weather=create_default_weather(),
+        )
 
         cars = [
             CarState(
