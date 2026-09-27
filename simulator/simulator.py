@@ -1,3 +1,4 @@
+from simulator.scenario import ScenarioConfig, ScenarioType, create_scenario
 from simulator.state import RaceState
 
 
@@ -9,8 +10,13 @@ class RaceSimulator:
     owns the actual race data and state transitions.
     """
 
-    def __init__(self, race: RaceState | None = None) -> None:
+    def __init__(
+        self,
+        race: RaceState | None = None,
+        scenario: ScenarioConfig | None = None,
+    ) -> None:
         self.race = race or RaceState.create_default()
+        self.scenario = scenario or create_scenario()
 
     def advance_one_lap(self):
         """
@@ -43,13 +49,19 @@ class RaceSimulator:
         return history
 
 
-def create_simulator() -> RaceSimulator:
-    """Create a simulator with the default race configuration."""
-    return RaceSimulator()
+def create_simulator(
+    scenario: ScenarioType = ScenarioType.NORMAL_RACE,
+) -> RaceSimulator:
+    """Create a simulator with the selected race scenario."""
+    return RaceSimulator(
+        scenario=create_scenario(scenario),
+    )
 
 
 if __name__ == "__main__":
-    simulator = create_simulator()
+    simulator = create_simulator(ScenarioType.NORMAL_RACE)
+
+    print(f"Scenario: {simulator.scenario.name.value}")
 
     for lap_number, cars in enumerate(
         simulator.advance_laps(3),
