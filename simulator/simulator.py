@@ -43,6 +43,9 @@ class RaceSimulator:
         if self.scenario.name == ScenarioType.SAFETY_CAR:
             self._apply_safety_car()
 
+        if self.scenario.name == ScenarioType.CLOSE_BATTLE:
+            self._apply_close_battle()
+
     def _apply_safety_car(self) -> None:
         """
         Compress gaps between cars and temporarily stop
@@ -57,6 +60,30 @@ class RaceSimulator:
 
             car.gap_change_ms_per_lap = 0
 
+    def _apply_close_battle(self) -> None:
+        """
+        Create a tightly contested race by reducing the
+        gaps and applying small opposing gap movements.
+        """
+
+        for car in self.race.cars.values():
+            if car.position == 1:
+                car.gap_to_leader_ms = 0
+                car.gap_change_ms_per_lap = 0
+            else:
+                car.gap_to_leader_ms = (
+                    self.scenario.close_battle_gap_ms
+                )
+
+                if car.car_id == "CAR_02":
+                    car.gap_change_ms_per_lap = (
+                        self.scenario.close_battle_gap_change_ms
+                    )
+                else:
+                    car.gap_change_ms_per_lap = (
+                        -self.scenario.close_battle_gap_change_ms
+                    )
+
     def advance_one_lap(self):
         """
         Advance every car by one simulated lap.
@@ -68,7 +95,7 @@ class RaceSimulator:
 
     def advance_laps(self, laps: int):
         """
-        Advance the race by multiple laps.
+        Advance the race by multiple simulated laps.
 
         Args:
             laps: Number of laps to simulate.
@@ -106,7 +133,7 @@ def create_simulator(
 
 if __name__ == "__main__":
     simulator = create_simulator(
-        ScenarioType.SAFETY_CAR
+        ScenarioType.CLOSE_BATTLE
     )
 
     print(
@@ -115,8 +142,7 @@ if __name__ == "__main__":
     )
 
     print()
-
-    print("Initial compressed gaps:")
+    print("Initial close-battle gaps:")
 
     for car in simulator.race.cars.values():
         print(
@@ -130,7 +156,7 @@ if __name__ == "__main__":
     print()
 
     for lap_number, cars in enumerate(
-        simulator.advance_laps(3),
+        simulator.advance_laps(5),
         start=1,
     ):
         print(f"LAP {lap_number}")

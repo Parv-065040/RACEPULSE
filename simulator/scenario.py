@@ -20,6 +20,8 @@ class ScenarioConfig:
     rain_intensity: float = 0.0
     tyre_degradation_per_lap: float = 0.02
     safety_car_gap_factor: float = 1.0
+    close_battle_gap_ms: int = 1000
+    close_battle_gap_change_ms: int = 100
 
 
 def create_scenario(
@@ -43,6 +45,13 @@ def create_scenario(
         return ScenarioConfig(
             name=scenario,
             safety_car_gap_factor=0.5,
+        )
+
+    if scenario == ScenarioType.CLOSE_BATTLE:
+        return ScenarioConfig(
+            name=scenario,
+            close_battle_gap_ms=1000,
+            close_battle_gap_change_ms=100,
         )
 
     return ScenarioConfig(
