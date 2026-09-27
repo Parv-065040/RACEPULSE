@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field, replace
 
+from simulator.tyre_state import TyreState, create_default_tyre
+
 
 @dataclass
 class CarState:
@@ -10,6 +12,7 @@ class CarState:
     position: int = 1
     degradation_ms_per_lap: int = 100
     gap_change_ms_per_lap: int = 0
+    tyre: TyreState = field(default_factory=create_default_tyre)
 
 
 @dataclass
@@ -40,6 +43,8 @@ class RaceState:
 
     def simulate_next_lap(self, car_id: str) -> CarState:
         car = self.get_car(car_id)
+
+        car.tyre.complete_lap()
 
         lap_time_ms = car.lap_time_ms + car.degradation_ms_per_lap
         gap_to_leader_ms = (
