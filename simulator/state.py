@@ -1,6 +1,10 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 
+from simulator.telemetry_state import (
+    TelemetryState,
+    create_default_telemetry,
+)
 from simulator.tyre_state import TyreState, create_default_tyre
 from simulator.weather_state import WeatherState, create_default_weather
 
@@ -19,6 +23,9 @@ class CarState:
     gap_change_ms_per_lap: int = 0
     is_running: bool = True
     tyre: TyreState = field(default_factory=create_default_tyre)
+    telemetry: TelemetryState = field(
+        default_factory=create_default_telemetry
+    )
 
 
 @dataclass
@@ -76,6 +83,11 @@ class RaceState:
         car.lap_time_ms = lap_time_ms
         car.gap_to_leader_ms = max(0, gap_to_leader_ms)
         car.position = position
+
+        car.telemetry.update(
+            lap_time_ms=car.lap_time_ms,
+            track_grip=self.weather.track_grip,
+        )
 
         return car
 
