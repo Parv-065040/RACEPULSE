@@ -1,7 +1,11 @@
-from dataclasses import dataclass, field, replace
+from copy import deepcopy
+from dataclasses import dataclass, field
 
 from simulator.tyre_state import TyreState, create_default_tyre
 from simulator.weather_state import WeatherState, create_default_weather
+
+
+GRIP_PENALTY_MS = 5000
 
 
 @dataclass
@@ -27,6 +31,31 @@ class RaceState:
     def get_car(self, car_id: str) -> CarState:
         return self.cars[car_id]
 
+    def calculate_effective_grip(self, car: CarState) -> float:
+        return max(
+            0.0,
+            min(
+                1.0,
+                car.tyre.grip * self.weather.track_grip,
+            ),
+        )
+
+    def calculate_grip_penalty_ms(self, car: CarState) -> int:
+        effective_grip = self.calculate_effective_grip(car)
+        grip_loss = 1.0 - effective_grip
+
+        return int(grip_loss * GRIP_PENALTY_MS)
+
+    def calculate_next_lap_time(self, car: CarState) -> int:
+        degradation = car.degradation_ms_per_lap
+        grip_penalty = self.calculate_grip_penalty_ms(car)
+
+        return (
+            car.lap_time_ms
+            + degradation
+            + grip_penalty
+        )
+
     def complete_lap(
         self,
         car_id: str,
@@ -48,9 +77,11 @@ class RaceState:
 
         car.tyre.complete_lap()
 
-        lap_time_ms = car.lap_time_ms + car.degradation_ms_per_lap
+        lap_time_ms = self.calculate_next_lap_time(car)
+
         gap_to_leader_ms = (
-            car.gap_to_leader_ms + car.gap_change_ms_per_lap
+            car.gap_to_leader_ms
+            + car.gap_change_ms_per_lap
         )
 
         return self.complete_lap(
@@ -69,14 +100,17 @@ class RaceState:
 
         return updated_cars
 
-    def simulate_laps(self, number_of_laps: int) -> list[list[CarState]]:
+    def simulate_laps(
+        self,
+        number_of_laps: int,
+    ) -> list[list[CarState]]:
         lap_history = []
 
         for _ in range(number_of_laps):
             current_lap = self.simulate_all_cars_next_lap()
 
             snapshot = [
-                replace(car)
+                deepcopy(car)
                 for car in current_lap
             ]
 
