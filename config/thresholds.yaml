@@ -12,3 +12,10 @@ lap_pace_delta:
     critical_ms: 1500
   enabled: true
   version: 1
+
+stale_stream_detection:
+  description: "Flags a car whose stream has gone quiet for longer than the threshold."
+  threshold_seconds: 15
+  poll_interval_ms: 5000
+  enabled: true
+  version: 1
