@@ -9,13 +9,6 @@ from simulator.state import RaceState
 
 
 class RaceSimulator:
-    """
-    Controls the progression of the synthetic race.
-
-    RaceSimulator owns the simulation loop while RaceState
-    owns the actual race data and state transitions.
-    """
-
     def __init__(
         self,
         race: RaceState | None = None,
@@ -24,12 +17,9 @@ class RaceSimulator:
         self.race = race or RaceState.create_default()
         self.scenario = scenario or create_scenario()
         self.current_lap = 0
-
         self._apply_scenario()
 
     def _apply_scenario(self) -> None:
-        """Apply the configured scenario to the race state."""
-
         if self.scenario.name == ScenarioType.RAIN:
             self.race.weather.update(
                 self.scenario.rain_intensity
@@ -48,25 +38,14 @@ class RaceSimulator:
             self._apply_close_battle()
 
     def _apply_safety_car(self) -> None:
-        """
-        Compress gaps between cars and temporarily stop
-        normal gap progression.
-        """
-
         for car in self.race.cars.values():
             car.gap_to_leader_ms = int(
                 car.gap_to_leader_ms
                 * self.scenario.safety_car_gap_factor
             )
-
             car.gap_change_ms_per_lap = 0
 
     def _apply_close_battle(self) -> None:
-        """
-        Create a tightly contested race by reducing the
-        gaps and applying small opposing gap movements.
-        """
-
         for car in self.race.cars.values():
             if car.position == 1:
                 car.gap_to_leader_ms = 0
@@ -85,16 +64,25 @@ class RaceSimulator:
                         -self.scenario.close_battle_gap_change_ms
                     )
 
-    def _apply_mechanical_failure(self) -> None:
-        """Apply the configured mechanical failure at the selected lap."""
+    def _reset_pit_stop_state(self) -> None:
+        for car in self.race.cars.values():
+            car.pitstop.pit_entry = False
+            car.pitstop.pit_stop = False
+            car.pitstop.tyre_change = False
+            car.pitstop.repair = False
+            car.pitstop.pit_exit = False
 
+    def _apply_mechanical_failure(self) -> None:
         if (
             self.scenario.name
             != ScenarioType.MECHANICAL_FAILURE
         ):
             return
 
-        if self.current_lap != self.scenario.mechanical_failure_lap:
+        if (
+            self.current_lap
+            != self.scenario.mechanical_failure_lap
+        ):
             return
 
         car_id = self.scenario.mechanical_failure_car_id
@@ -102,32 +90,37 @@ class RaceSimulator:
         if car_id in self.race.cars:
             self.race.fail_car(car_id)
 
+    def _apply_pit_stop(self) -> None:
+        self._reset_pit_stop_state()
+
+        if self.scenario.name != ScenarioType.PIT_STOP:
+            return
+
+        if self.current_lap != self.scenario.pitstop_lap:
+            return
+
+        car_id = self.scenario.pitstop_car_id
+
+        if car_id not in self.race.cars:
+            return
+
+        car = self.race.get_car(car_id)
+
+        car.pitstop.pit_entry = True
+        car.pitstop.pit_stop = True
+        car.pitstop.tyre_change = True
+        car.pitstop.repair = False
+        car.pitstop.pit_exit = True
+
     def advance_one_lap(self):
-        """
-        Advance every running car by one simulated lap.
-
-        A configured mechanical failure is applied before
-        the affected lap is simulated.
-
-        Returns:
-            List of running CarState objects.
-        """
         self.current_lap += 1
 
         self._apply_mechanical_failure()
+        self._apply_pit_stop()
 
         return self.race.simulate_all_cars_next_lap()
 
     def advance_laps(self, laps: int):
-        """
-        Advance the race by multiple simulated laps.
-
-        Args:
-            laps: Number of laps to simulate.
-
-        Returns:
-            List of independent snapshots for each lap.
-        """
         if laps < 1:
             raise ValueError("laps must be at least 1")
 
@@ -135,12 +128,10 @@ class RaceSimulator:
 
         for _ in range(laps):
             cars = self.advance_one_lap()
-
             snapshot = [
                 deepcopy(car)
                 for car in cars
             ]
-
             history.append(snapshot)
 
         return history
@@ -149,10 +140,8 @@ class RaceSimulator:
 def create_simulator(
     scenario: ScenarioType = ScenarioType.NORMAL_RACE,
 ) -> RaceSimulator:
-    """Create a simulator with the selected race scenario."""
-
     return RaceSimulator(
-        scenario=create_scenario(scenario),
+        scenario=create_scenario(scenario)
     )
 
 

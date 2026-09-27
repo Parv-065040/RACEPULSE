@@ -9,6 +9,7 @@ class ScenarioType(str, Enum):
     SAFETY_CAR = "SAFETY_CAR"
     MECHANICAL_FAILURE = "MECHANICAL_FAILURE"
     CLOSE_BATTLE = "CLOSE_BATTLE"
+    PIT_STOP = "PIT_STOP"
     COMMERCIAL_SURGE = "COMMERCIAL_SURGE"
     DATA_FAILURE = "DATA_FAILURE"
     CONFIGURATION_FAILURE = "CONFIGURATION_FAILURE"
@@ -24,6 +25,8 @@ class ScenarioConfig:
     close_battle_gap_change_ms: int = 100
     mechanical_failure_car_id: str = "CAR_03"
     mechanical_failure_lap: int = 3
+    pitstop_car_id: str = "CAR_01"
+    pitstop_lap: int = 2
 
 
 def create_scenario(
@@ -61,6 +64,13 @@ def create_scenario(
             name=scenario,
             mechanical_failure_car_id="CAR_03",
             mechanical_failure_lap=3,
+        )
+
+    if scenario == ScenarioType.PIT_STOP:
+        return ScenarioConfig(
+            name=scenario,
+            pitstop_car_id="CAR_01",
+            pitstop_lap=2,
         )
 
     return ScenarioConfig(
