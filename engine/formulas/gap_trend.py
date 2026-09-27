@@ -2,13 +2,16 @@
 Gap Trend KPI - Parv's ownership (engine/formulas/).
 Tracks a rolling window of each car's gap_to_leader_ms and computes
 the average per-lap change. Reads thresholds and window_size live
-from engine.config.loader.
+from engine.config.loader. Windowing delegated to engine.windows.RollingWindow
+and severity classification to engine.rules.severity_rules
+(structural change only - same outputs as before).
 """
-from collections import deque
 from engine.config.loader import get_config
+from engine.windows.rolling_window import RollingWindow
+from engine.rules.severity_rules import evaluate_severity
 
-_gap_history_by_car: dict[str, deque] = {}
-_window_size_in_use_by_car: dict[str, int] = {}
+_window = RollingWindow(window_size=3)  # initial size; resized live below
+
 
 def compute_gap_trend(car_id: str, gap_to_leader_ms: int) -> dict:
     gt_config = get_config()["gap_trend"]
@@ -16,15 +19,12 @@ def compute_gap_trend(car_id: str, gap_to_leader_ms: int) -> dict:
     warning_ms_per_lap = gt_config["severity_thresholds"]["widening_warning_ms_per_lap"]
     critical_ms_per_lap = gt_config["severity_thresholds"]["widening_critical_ms_per_lap"]
 
-    if _window_size_in_use_by_car.get(car_id) != window_size:
-        existing = list(_gap_history_by_car.get(car_id, []))
-        _gap_history_by_car[car_id] = deque(existing[-window_size:], maxlen=window_size)
-        _window_size_in_use_by_car[car_id] = window_size
+    if window_size != _window.window_size:
+        _window.set_window_size(window_size)
 
-    history = _gap_history_by_car[car_id]
-    history.append(gap_to_leader_ms)
+    _window.push(car_id, gap_to_leader_ms)
 
-    if len(history) < 2:
+    if not _window.is_full(car_id):
         return {
             "kpi_id": "KPI-002",
             "car_id": car_id,
@@ -33,13 +33,15 @@ def compute_gap_trend(car_id: str, gap_to_leader_ms: int) -> dict:
             "severity": "none",
         }
 
+    history = _window.get(car_id)
     laps_spanned = len(history) - 1
     trend_ms_per_lap = (history[-1] - history[0]) / laps_spanned
 
-    if trend_ms_per_lap >= critical_ms_per_lap:
-        severity = "critical"
-    elif trend_ms_per_lap >= warning_ms_per_lap:
-        severity = "warning"
+    # Asymmetric by design: only a widening gap (falling behind) can alert.
+    # A car catching up (negative trend) is never a severity condition -
+    # that decision lives here, not inside evaluate_severity().
+    if trend_ms_per_lap > 0:
+        severity = evaluate_severity(trend_ms_per_lap, warning_ms_per_lap, critical_ms_per_lap)
     else:
         severity = "none"
 
