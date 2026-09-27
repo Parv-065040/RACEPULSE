@@ -2,7 +2,7 @@ import json
 
 from kafka import KafkaProducer
 
-from simulator.state import RaceState
+from simulator.simulator import RaceSimulator
 from simulator.timing_event import build_timing_event
 
 
@@ -31,12 +31,12 @@ def publish_timing_event(
 
 
 def main() -> None:
-    race = RaceState.create_default()
+    simulator = RaceSimulator()
     producer = create_producer()
 
     try:
-        for lap_number in range(1, NUMBER_OF_LAPS + 1):
-            cars = race.simulate_all_cars_next_lap()
+        for _ in range(NUMBER_OF_LAPS):
+            cars = simulator.advance_one_lap()
 
             for car in cars:
                 event = build_timing_event(car)
@@ -50,7 +50,8 @@ def main() -> None:
                     f"Published timing event: "
                     f"{event['car_id']} | "
                     f"lap={event['lap_number']} | "
-                    f"lap_time_ms={event['lap_time_ms']}"
+                    f"lap_time_ms={event['lap_time_ms']} | "
+                    f"gap={event['gap_to_leader_ms']}"
                 )
 
         producer.flush()
