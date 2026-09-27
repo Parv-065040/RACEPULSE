@@ -1,6 +1,10 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 
+from simulator.incident_state import (
+    IncidentState,
+    create_default_incident,
+)
 from simulator.pitstop_state import (
     PitStopState,
     create_default_pitstop,
@@ -32,6 +36,9 @@ class CarState:
     )
     pitstop: PitStopState = field(
         default_factory=create_default_pitstop
+    )
+    incident: IncidentState = field(
+        default_factory=create_default_incident
     )
 
 

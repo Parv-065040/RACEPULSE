@@ -87,8 +87,19 @@ class RaceSimulator:
 
         car_id = self.scenario.mechanical_failure_car_id
 
-        if car_id in self.race.cars:
-            self.race.fail_car(car_id)
+        if car_id not in self.race.cars:
+            return
+
+        car = self.race.get_car(car_id)
+
+        car.incident.incident_type = "MECHANICAL_FAILURE"
+        car.incident.active = True
+        car.incident.severity = "HIGH"
+        car.incident.description = (
+            "Mechanical failure caused the car to retire."
+        )
+
+        self.race.fail_car(car_id)
 
     def _apply_pit_stop(self) -> None:
         self._reset_pit_stop_state()
@@ -195,6 +206,10 @@ if __name__ == "__main__":
             else "FAILED",
             "| last_lap=",
             failed_car.lap_number,
+            "| incident=",
+            failed_car.incident.incident_type,
+            "| active=",
+            failed_car.incident.active,
         )
 
         print()
