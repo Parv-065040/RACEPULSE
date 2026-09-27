@@ -40,13 +40,7 @@ class RaceState:
     def simulate_next_lap(self, car_id: str) -> CarState:
         car = self.get_car(car_id)
 
-        next_lap = car.lap_number + 1
-
-        lap_time_ms = (
-            car.lap_time_ms
-            + car.degradation_ms_per_lap
-        )
-
+        lap_time_ms = car.lap_time_ms + car.degradation_ms_per_lap
         gap_to_leader_ms = car.gap_to_leader_ms
 
         return self.complete_lap(
@@ -55,6 +49,15 @@ class RaceState:
             gap_to_leader_ms=gap_to_leader_ms,
             position=car.position,
         )
+
+    def simulate_all_cars_next_lap(self) -> list[CarState]:
+        updated_cars = []
+
+        for car_id in self.cars:
+            updated_car = self.simulate_next_lap(car_id)
+            updated_cars.append(updated_car)
+
+        return updated_cars
 
     @classmethod
     def create_default(cls) -> "RaceState":
