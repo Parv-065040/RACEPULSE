@@ -9,6 +9,7 @@ class CarState:
     gap_to_leader_ms: int = 0
     position: int = 1
     degradation_ms_per_lap: int = 100
+    gap_change_ms_per_lap: int = 0
 
 
 @dataclass
@@ -41,7 +42,9 @@ class RaceState:
         car = self.get_car(car_id)
 
         lap_time_ms = car.lap_time_ms + car.degradation_ms_per_lap
-        gap_to_leader_ms = car.gap_to_leader_ms
+        gap_to_leader_ms = (
+            car.gap_to_leader_ms + car.gap_change_ms_per_lap
+        )
 
         return self.complete_lap(
             car_id=car_id,
@@ -85,6 +88,7 @@ class RaceState:
                 gap_to_leader_ms=0,
                 position=1,
                 degradation_ms_per_lap=150,
+                gap_change_ms_per_lap=0,
             ),
             CarState(
                 car_id="CAR_02",
@@ -92,6 +96,7 @@ class RaceState:
                 gap_to_leader_ms=3000,
                 position=2,
                 degradation_ms_per_lap=80,
+                gap_change_ms_per_lap=400,
             ),
             CarState(
                 car_id="CAR_03",
@@ -99,6 +104,7 @@ class RaceState:
                 gap_to_leader_ms=5000,
                 position=3,
                 degradation_ms_per_lap=220,
+                gap_change_ms_per_lap=-300,
             ),
         ]
 
