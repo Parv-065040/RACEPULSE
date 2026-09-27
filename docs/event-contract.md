@@ -1,7 +1,7 @@
 # RACEPULSE — Event Contract
 
-> STATUS: DRAFT. `race.timing`, `race.telemetry`, `race.tyres`, and
-> `race.weather` are defined as draft contracts. These sections need team
+> STATUS: DRAFT. `race.timing`, `race.telemetry`, `race.tyres`, `race.weather`,
+> and `race.pitstops` are defined as draft contracts. These sections need team
 > review before being treated as final.
 
 ## Topic: race.timing

@@ -1,6 +1,10 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 
+from simulator.pitstop_state import (
+    PitStopState,
+    create_default_pitstop,
+)
 from simulator.telemetry_state import (
     TelemetryState,
     create_default_telemetry,
@@ -25,6 +29,9 @@ class CarState:
     tyre: TyreState = field(default_factory=create_default_tyre)
     telemetry: TelemetryState = field(
         default_factory=create_default_telemetry
+    )
+    pitstop: PitStopState = field(
+        default_factory=create_default_pitstop
     )
 
 
@@ -57,18 +64,12 @@ class RaceState:
     def calculate_grip_penalty_ms(self, car: CarState) -> int:
         effective_grip = self.calculate_effective_grip(car)
         grip_loss = 1.0 - effective_grip
-
         return int(grip_loss * GRIP_PENALTY_MS)
 
     def calculate_next_lap_time(self, car: CarState) -> int:
         degradation = car.degradation_ms_per_lap
         grip_penalty = self.calculate_grip_penalty_ms(car)
-
-        return (
-            car.lap_time_ms
-            + degradation
-            + grip_penalty
-        )
+        return car.lap_time_ms + degradation + grip_penalty
 
     def complete_lap(
         self,
@@ -78,17 +79,14 @@ class RaceState:
         position: int,
     ) -> CarState:
         car = self.get_car(car_id)
-
         car.lap_number += 1
         car.lap_time_ms = lap_time_ms
         car.gap_to_leader_ms = max(0, gap_to_leader_ms)
         car.position = position
-
         car.telemetry.update(
             lap_time_ms=car.lap_time_ms,
             track_grip=self.weather.track_grip,
         )
-
         return car
 
     def simulate_next_lap(self, car_id: str) -> CarState:
@@ -133,12 +131,10 @@ class RaceState:
 
         for _ in range(number_of_laps):
             current_lap = self.simulate_all_cars_next_lap()
-
             snapshot = [
                 deepcopy(car)
                 for car in current_lap
             ]
-
             lap_history.append(snapshot)
 
         return lap_history
@@ -146,7 +142,7 @@ class RaceState:
     @classmethod
     def create_default(cls) -> "RaceState":
         race = cls(
-            weather=create_default_weather(),
+            weather=create_default_weather()
         )
 
         cars = [
