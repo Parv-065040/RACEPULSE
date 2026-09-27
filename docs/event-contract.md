@@ -1,7 +1,7 @@
 # RACEPULSE — Event Contract
 
-> STATUS: DRAFT. `race.timing` is defined and `race.telemetry` is proposed.
-> Telemetry contract needs team review before being treated as final.
+> STATUS: DRAFT. `race.timing`, `race.telemetry`, and `race.tyres` are defined as
+> draft contracts. These sections need team review before being treated as final.
 
 ## Topic: race.timing
 
