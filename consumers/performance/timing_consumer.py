@@ -1,17 +1,18 @@
 """
 Performance consumer - Parv's ownership.
 Reads race.timing, validates against the event contract, computes
-Lap Pace Delta KPI per car, persists results to MySQL, raises alerts
-on warning/critical severity, routes invalid events to system.dlq,
-and monitors for stale (silent) streams per car.
+KPI-001 (Lap Pace Delta) and KPI-002 (Gap Trend) per car, persists
+results to MySQL, raises alerts on warning/critical severity, routes
+invalid events to system.dlq, and monitors for stale (silent) streams.
 """
 import json
 from kafka import KafkaConsumer
 from engine.formulas.lap_pace_delta import compute_lap_pace_delta
+from engine.formulas.gap_trend import compute_gap_trend
 from engine.alerts.alert_engine import raise_alert_if_needed
 from engine.alerts.stale_stream_monitor import mark_seen, check_for_stale_cars, _CONFIG as STALE_CONFIG
 from engine.validation.dlq import send_to_dlq
-from database.writer import write_kpi_result
+from database.writer import write_kpi_result, write_gap_trend_result
 
 REQUIRED_FIELDS = {
     "event_id": str,
@@ -44,18 +45,21 @@ def process_event(message) -> None:
 
     mark_seen(event["car_id"])
 
-    kpi = compute_lap_pace_delta(event["car_id"], event["lap_time_ms"])
-    write_kpi_result(kpi, event)
+    pace_kpi = compute_lap_pace_delta(event["car_id"], event["lap_time_ms"])
+    write_kpi_result(pace_kpi, event)
+    if pace_kpi["severity"] != "none":
+        raise_alert_if_needed(pace_kpi, event)
 
-    if kpi["severity"] != "none":
-        raise_alert_if_needed(kpi, event)
-        print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
-              f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
-              f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}  [saved] [ALERT RAISED]")
-    else:
-        print(f"KPI-001  car={kpi['car_id']}  lap={event['lap_number']}  "
-              f"lap_time_ms={kpi['lap_time_ms']}  best={kpi['best_lap_time_ms']}  "
-              f"delta_ms={kpi['delta_ms']}  severity={kpi['severity']}  [saved]")
+    gap_kpi = compute_gap_trend(event["car_id"], event["gap_to_leader_ms"])
+    write_gap_trend_result(gap_kpi, event)
+
+    pace_flag = " [ALERT RAISED]" if pace_kpi["severity"] != "none" else ""
+    print(f"KPI-001  car={pace_kpi['car_id']}  lap={event['lap_number']}  "
+          f"lap_time_ms={pace_kpi['lap_time_ms']}  best={pace_kpi['best_lap_time_ms']}  "
+          f"delta_ms={pace_kpi['delta_ms']}  severity={pace_kpi['severity']}  [saved]{pace_flag}")
+    print(f"KPI-002  car={gap_kpi['car_id']}  lap={event['lap_number']}  "
+          f"gap_ms={gap_kpi['gap_to_leader_ms']}  trend_ms_per_lap={gap_kpi['trend_ms_per_lap']}  "
+          f"severity={gap_kpi['severity']}  [saved]")
 
 def main():
     consumer = KafkaConsumer(

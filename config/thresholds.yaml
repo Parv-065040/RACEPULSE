@@ -13,6 +13,22 @@ lap_pace_delta:
   enabled: true
   version: 1
 
+gap_trend:
+  kpi_id: KPI-002
+  name: Gap Trend
+  description: "Average change in gap-to-leader per lap over the last N laps. Positive = falling behind, negative = catching up."
+  formula: "(gap_to_leader_ms[latest] - gap_to_leader_ms[oldest_in_window]) / (laps_in_window - 1)"
+  input_fields:
+    - gap_to_leader_ms
+  window: "rolling last 3 laps"
+  window_size: 3
+  unit: milliseconds_per_lap
+  severity_thresholds:
+    widening_warning_ms_per_lap: 200
+    widening_critical_ms_per_lap: 400
+  enabled: true
+  version: 1
+
 stale_stream_detection:
   description: "Flags a car whose stream has gone quiet for longer than the threshold."
   threshold_seconds: 15
