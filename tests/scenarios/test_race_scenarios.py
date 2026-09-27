@@ -50,6 +50,18 @@ def test_safety_car_compresses_gaps():
     assert car_03.gap_change_ms_per_lap == 0
 
 
+def test_safety_car_creates_active_incidents():
+    simulator = create_simulator(ScenarioType.SAFETY_CAR)
+
+    for car in simulator.race.cars.values():
+        assert car.incident.incident_type == "SAFETY_CAR"
+        assert car.incident.active is True
+        assert car.incident.severity == "MEDIUM"
+        assert car.incident.description == (
+            "Safety car deployed on the track."
+        )
+
+
 def test_close_battle_creates_tight_gaps():
     simulator = create_simulator(ScenarioType.CLOSE_BATTLE)
 
@@ -108,3 +120,22 @@ def test_mechanical_failure_removes_failed_car_from_active_simulation():
 
     assert failed_car.is_running is False
     assert failed_car.lap_number == 2
+
+
+def test_mechanical_failure_creates_incident():
+    simulator = create_simulator(
+        ScenarioType.MECHANICAL_FAILURE
+    )
+
+    simulator.advance_laps(3)
+
+    failed_car = simulator.race.get_car("CAR_03")
+
+    assert failed_car.incident.incident_type == (
+        "MECHANICAL_FAILURE"
+    )
+    assert failed_car.incident.active is True
+    assert failed_car.incident.severity == "HIGH"
+    assert failed_car.incident.description == (
+        "Mechanical failure caused the car to retire."
+    )
