@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 
 @dataclass
@@ -58,6 +58,21 @@ class RaceState:
             updated_cars.append(updated_car)
 
         return updated_cars
+
+    def simulate_laps(self, number_of_laps: int) -> list[list[CarState]]:
+        lap_history = []
+
+        for _ in range(number_of_laps):
+            current_lap = self.simulate_all_cars_next_lap()
+
+            snapshot = [
+                replace(car)
+                for car in current_lap
+            ]
+
+            lap_history.append(snapshot)
+
+        return lap_history
 
     @classmethod
     def create_default(cls) -> "RaceState":
