@@ -3,3 +3,7 @@
 
 __pycache__/
 *.pyc
+
+consumer_log.txt
+
+.pytest_cache/
