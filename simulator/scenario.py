@@ -18,6 +18,7 @@ class ScenarioType(str, Enum):
 class ScenarioConfig:
     name: ScenarioType
     rain_intensity: float = 0.0
+    tyre_degradation_per_lap: float = 0.02
 
 
 def create_scenario(
@@ -31,7 +32,12 @@ def create_scenario(
             rain_intensity=0.7,
         )
 
+    if scenario == ScenarioType.TYRE_CRISIS:
+        return ScenarioConfig(
+            name=scenario,
+            tyre_degradation_per_lap=0.08,
+        )
+
     return ScenarioConfig(
         name=scenario,
-        rain_intensity=0.0,
     )

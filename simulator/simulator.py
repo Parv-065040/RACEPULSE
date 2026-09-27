@@ -34,6 +34,12 @@ class RaceSimulator:
                 self.scenario.rain_intensity
             )
 
+        if self.scenario.name == ScenarioType.TYRE_CRISIS:
+            for car in self.race.cars.values():
+                car.tyre.degradation_per_lap = (
+                    self.scenario.tyre_degradation_per_lap
+                )
+
     def advance_one_lap(self):
         """
         Advance every car by one simulated lap.
@@ -61,9 +67,11 @@ class RaceSimulator:
         for _ in range(laps):
             cars = self.advance_one_lap()
 
-            # Store independent snapshots so later
-            # simulation steps cannot modify earlier laps.
-            snapshot = [deepcopy(car) for car in cars]
+            snapshot = [
+                deepcopy(car)
+                for car in cars
+            ]
+
             history.append(snapshot)
 
         return history
@@ -80,25 +88,24 @@ def create_simulator(
 
 
 if __name__ == "__main__":
-    simulator = create_simulator(ScenarioType.RAIN)
+    simulator = create_simulator(
+        ScenarioType.TYRE_CRISIS
+    )
 
-    print(f"Scenario: {simulator.scenario.name.value}")
     print(
-        f"Rain intensity: "
-        f"{simulator.race.weather.rain_intensity}"
+        f"Scenario: "
+        f"{simulator.scenario.name.value}"
     )
+
     print(
-        f"Track wetness: "
-        f"{simulator.race.weather.track_wetness}"
+        f"Tyre degradation per lap: "
+        f"{simulator.scenario.tyre_degradation_per_lap}"
     )
-    print(
-        f"Track grip: "
-        f"{simulator.race.weather.track_grip}"
-    )
+
     print()
 
     for lap_number, cars in enumerate(
-        simulator.advance_laps(3),
+        simulator.advance_laps(5),
         start=1,
     ):
         print(f"LAP {lap_number}")
@@ -112,11 +119,10 @@ if __name__ == "__main__":
                 car.lap_time_ms,
                 "tyre_age=",
                 car.tyre.age_laps,
-                "track_grip=",
-                round(
-                    simulator.race.weather.track_grip,
-                    2,
-                ),
+                "wear=",
+                round(car.tyre.wear, 2),
+                "grip=",
+                round(car.tyre.grip, 2),
             )
 
         print()
