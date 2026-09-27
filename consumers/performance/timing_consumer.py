@@ -3,14 +3,17 @@ Performance consumer - Parv's ownership.
 Reads race.timing, validates against the event contract, computes
 KPI-001 (Lap Pace Delta) and KPI-002 (Gap Trend) per car, persists
 results to MySQL, raises alerts on warning/critical severity, routes
-invalid events to system.dlq, and monitors for stale (silent) streams.
+invalid events to system.dlq, monitors for stale (silent) streams,
+and live-reloads thresholds from config/thresholds.yaml without needing
+a restart.
 """
 import json
 from kafka import KafkaConsumer
+from engine.config.loader import start_config_watcher
 from engine.formulas.lap_pace_delta import compute_lap_pace_delta
 from engine.formulas.gap_trend import compute_gap_trend
 from engine.alerts.alert_engine import raise_alert_if_needed
-from engine.alerts.stale_stream_monitor import mark_seen, check_for_stale_cars, _CONFIG as STALE_CONFIG
+from engine.alerts.stale_stream_monitor import mark_seen, check_for_stale_cars
 from engine.validation.dlq import send_to_dlq
 from database.writer import write_kpi_result, write_gap_trend_result
 
@@ -24,7 +27,7 @@ REQUIRED_FIELDS = {
     "position": int,
 }
 
-POLL_TIMEOUT_MS = STALE_CONFIG["poll_interval_ms"]
+POLL_TIMEOUT_MS = 5000
 
 def validate(event: dict) -> list[str]:
     errors = []
@@ -62,6 +65,8 @@ def process_event(message) -> None:
           f"severity={gap_kpi['severity']}  [saved]")
 
 def main():
+    start_config_watcher()
+
     consumer = KafkaConsumer(
         "race.timing",
         bootstrap_servers="localhost:9092",

@@ -1,24 +1,18 @@
 """
 Lap Pace Delta KPI - Parv's ownership (engine/formulas/).
 Tracks each car's best lap time seen so far and computes the delta
-for every new lap. Stateful per car_id, in-memory (no persistence yet -
-that is Step 5, once MySQL is wired in).
+for every new lap. Reads thresholds live from engine.config.loader,
+so a config change takes effect without restarting the consumer.
 """
-import yaml
-
-with open("config/thresholds.yaml", "r", encoding="utf-8-sig") as f:
-    _CONFIG = yaml.safe_load(f)["lap_pace_delta"]
-
-WARNING_MS = _CONFIG["severity_thresholds"]["warning_ms"]
-CRITICAL_MS = _CONFIG["severity_thresholds"]["critical_ms"]
+from engine.config.loader import get_config
 
 _best_lap_by_car: dict[str, int] = {}
 
 def compute_lap_pace_delta(car_id: str, lap_time_ms: int) -> dict:
-    """
-    Returns a dict with the KPI result for this lap event.
-    First lap for a car has no prior best, so delta is 0 and severity is "none".
-    """
+    thresholds = get_config()["lap_pace_delta"]["severity_thresholds"]
+    warning_ms = thresholds["warning_ms"]
+    critical_ms = thresholds["critical_ms"]
+
     previous_best = _best_lap_by_car.get(car_id)
 
     if previous_best is None:
@@ -34,9 +28,9 @@ def compute_lap_pace_delta(car_id: str, lap_time_ms: int) -> dict:
 
     delta_ms = lap_time_ms - previous_best
 
-    if delta_ms >= CRITICAL_MS:
+    if delta_ms >= critical_ms:
         severity = "critical"
-    elif delta_ms >= WARNING_MS:
+    elif delta_ms >= warning_ms:
         severity = "warning"
     else:
         severity = "none"
