@@ -45,6 +45,13 @@ class RaceSimulator:
             )
             car.gap_change_ms_per_lap = 0
 
+            car.incident.incident_type = "SAFETY_CAR"
+            car.incident.active = True
+            car.incident.severity = "MEDIUM"
+            car.incident.description = (
+                "Safety car deployed on the track."
+            )
+
     def _apply_close_battle(self) -> None:
         for car in self.race.cars.values():
             if car.position == 1:
