@@ -1,8 +1,10 @@
 # RACEPULSE — Event Contract
 
 > STATUS: DRAFT. `race.timing`, `race.telemetry`, `race.tyres`, `race.weather`,
-> `race.pitstops`, and `race.incidents` are defined as draft contracts. These
-> sections need team review before being treated as final.
+> `race.pitstops`, `race.incidents`, `business.fans` and `business.sponsors` are
+> defined as draft contracts. These sections need team review before being
+> treated as final. `business.*` drafted by Navroop - review: Parv (processing),
+> Yashi (dashboard fields).
 
 ## Topic: race.timing
 
@@ -199,3 +201,101 @@ Emitted when an active race incident occurs.
 | description | string | Human-readable incident description |
 
 **Partitioning:** Keyed by car_id to preserve per-car incident ordering across partitions.
+
+## Topic: business.fans
+
+DRAFT (Navroop) - review: Parv, Yashi.
+
+Emitted per lap, per running car. Raw engagement counts for that lap; derived
+metrics (e.g. Fan Engagement Rate) are computed downstream, not by the producer.
+A retired car emits nothing (no data is not zero).
+
+```json
+{
+  "event_id": "uuid",
+  "event_time": "2026-09-26T10:15:30.000Z",
+  "car_id": "CAR_01",
+  "lap_number": 1,
+  "viewers": 62755,
+  "app_sessions": 18826,
+  "searches": 3137,
+  "likes": 7604,
+  "comments": 1255,
+  "shares": 627,
+  "merch_clicks": 313
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| event_id | string (UUID) | For idempotency/duplicate detection |
+| event_time | ISO 8601 timestamp | Event-time, not processing-time |
+| car_id | string | Car (driver/team) the engagement is attributed to |
+| lap_number | integer | Lap the counts refer to |
+| viewers | integer, >= 0 | Simulated viewers attributed to this car this lap |
+| app_sessions | integer, >= 0 | Fan-app sessions |
+| searches | integer, >= 0 | Searches |
+| likes | integer, >= 0 | Likes |
+| comments | integer, >= 0 | Comments |
+| shares | integer, >= 0 | Shares |
+| merch_clicks | integer, >= 0 | Merchandise link clicks |
+
+**Simulation note:** counts follow race state (position, rain, active incident,
+close gap, pit stop, `COMMERCIAL_SURGE`) via `producers/fans/excitement.py`.
+The weights are simulation heuristics, not validated marketing metrics.
+
+**Partitioning:** Keyed by car_id to preserve per-car ordering across partitions.
+
+## Topic: business.sponsors
+
+DRAFT (Navroop) - review: Parv, Yashi.
+
+Emitted per lap, per running car. Each car carries one sponsor's livery
+(`CAR_01`->`SPONSOR_01`, `CAR_02`->`SPONSOR_02`, `CAR_03`->`SPONSOR_03`).
+
+```json
+{
+  "event_id": "uuid",
+  "event_time": "2026-09-26T10:15:30.000Z",
+  "car_id": "CAR_01",
+  "lap_number": 1,
+  "sponsor_id": "SPONSOR_01",
+  "impressions": 65766,
+  "visibility_seconds": 26.9,
+  "clicks": 247,
+  "conversions": 19
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| event_id | string (UUID) | For idempotency/duplicate detection |
+| event_time | ISO 8601 timestamp | Event-time, not processing-time |
+| car_id | string | Car carrying the sponsor's livery |
+| lap_number | integer | Lap the counts refer to |
+| sponsor_id | string | e.g. "SPONSOR_01" |
+| impressions | integer, >= 0 | Simulated impressions this lap |
+| visibility_seconds | number, >= 0 | Seconds the livery was visible on broadcast this lap |
+| clicks | integer, >= 0 | Must be <= impressions |
+| conversions | integer, >= 0 | Must be <= clicks |
+
+**Partitioning:** Keyed by car_id (not sponsor_id) so business and race events
+join on the same key and keep per-car ordering.
+
+## Validation rules (engine/validation/)
+
+Owner: Navroop. Schemas live in `engine/validation/schemas.py` and must match
+the sections above; change both in the same PR.
+
+| Failure | Behaviour |
+|---|---|
+| Invalid JSON / non-object JSON | Rejected, sent to `system.dlq` |
+| Missing field, wrong type (a boolean is not a number), out-of-range value, bad UUID, bad timestamp | Rejected, sent to `system.dlq` |
+| Unknown `car_id` / `sponsor_id` | Rejected, sent to `system.dlq` |
+| Cross-field violation (`clicks > impressions`, `conversions > clicks`) | Rejected, sent to `system.dlq` |
+| Duplicate `event_id` on the same topic | Dropped and counted (not a DLQ case) |
+| Extra unknown fields | Tolerated |
+
+DLQ record shape (unchanged, from `engine/validation/dlq.py`):
+`{source_topic, failed_at, key, raw_value, errors}`. `raw_value` is always a JSON
+object: an unparseable payload is wrapped as `{"_unparseable_payload": "<text>"}`.
