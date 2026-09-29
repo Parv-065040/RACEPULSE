@@ -8,6 +8,7 @@ from datetime import datetime
 from kafka import KafkaConsumer, KafkaProducer
 from database.connection import get_connection
 from engine.validation.gate import ValidationGate
+from engine.config.loader import get_config, start_config_watcher
 
 BOOTSTRAP = "localhost:9092"
 TOPICS = ["race.timing", "race.tyres", "race.weather", "race.pitstops"]
@@ -41,10 +42,11 @@ def compute_signals(state: dict) -> list[dict]:
     wetness = float(weather.get("track_wetness", 0.0))
     risk = degradation * 5.0 + grip_loss * 2.0 + pace_delta_s * 0.4 + wetness * 0.5
     pit_signal = min(1.0, risk / 2.0 + (0.5 if pit.get("pit_stop") else 0.0))
+    cfg=get_config()["strategy"]
     return [
-        {"kpi_id":"STR-001","value":risk,"warn":0.75,"crit":1.5,
+        {"kpi_id":"STR-001","value":risk,"warn":cfg["tyre_risk"]["warning"],"crit":cfg["tyre_risk"]["critical"],
          "message":"Tyre, pace and track conditions indicate increasing strategy risk."},
-        {"kpi_id":"STR-002","value":pit_signal,"warn":0.6,"crit":0.85,
+        {"kpi_id":"STR-002","value":pit_signal,"warn":cfg["pit_window"]["warning"],"crit":cfg["pit_window"]["critical"],
          "message":"Current race context warrants pit-window review."},
     ]
 
