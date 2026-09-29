@@ -17,7 +17,7 @@ from simulator.tyre_state import TyreState, create_default_tyre
 from simulator.weather_state import WeatherState, create_default_weather
 
 
-GRIP_PENALTY_MS = 5000
+GRIP_PENALTY_MS = 500
 
 
 @dataclass
