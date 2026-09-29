@@ -34,7 +34,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-racepulse_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
     ports:
-      - "3308:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 
@@ -44,7 +44,7 @@ services:
     depends_on:
       - mysql
     ports:
-      - "3002:3000"
+      - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin

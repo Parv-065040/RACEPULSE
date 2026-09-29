@@ -1,4 +1,4 @@
-# RACEPULSE — Yashi Tiwari Work Documentation
+# RACEPULSE â€” Yashi Tiwari Work Documentation
 
 ## 1. Team Member
 
@@ -14,7 +14,7 @@ The responsibility was to convert processed race analytics stored in MySQL into 
 
 The overall RACEPULSE architecture is:
 
-**Race Simulation → Core Producers → Kafka/ZooKeeper → Consumers → KPI & Rule Engine → Alerts/Analytical Results → MySQL → Grafana**
+**Race Simulation â†’ Core Producers â†’ Kafka/ZooKeeper â†’ Consumers â†’ KPI & Rule Engine â†’ Alerts/Analytical Results â†’ MySQL â†’ Grafana**
 
 The team architecture and core Kafka streams are documented in the project work documentation. :contentReference[oaicite:0]{index=0}
 
@@ -248,9 +248,7 @@ Important fields include:
 - `severity`
 - `event_time`
 
-Best lap is derived as:
-
-`lap_time_ms - delta_ms`
+Best lap is stored directly as the `best_lap_time_ms` column (not derived from `lap_time_ms - delta_ms`, which gives a stale value on the exact lap a new personal best is set - see racepulse-control-room.json's Current Car Status query for the corrected version).
 
 ---
 
@@ -362,10 +360,10 @@ Important files:
 ```text
 docker-compose.yml
 grafana/
-├── dashboards/
-│   └── racepulse-control-room.json
-└── provisioning/
-    ├── dashboards/
-    │   └── dashboard.yml
-    └── datasources/
-        └── mysql.yml
+â”œâ”€â”€ dashboards/
+â”‚   â””â”€â”€ racepulse-control-room.json
+â””â”€â”€ provisioning/
+    â”œâ”€â”€ dashboards/
+    â”‚   â””â”€â”€ dashboard.yml
+    â””â”€â”€ datasources/
+        â””â”€â”€ mysql.yml
