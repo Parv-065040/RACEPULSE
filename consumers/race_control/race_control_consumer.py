@@ -12,6 +12,7 @@ from kafka import KafkaConsumer, KafkaProducer
 from database.connection import get_connection
 from engine.validation.gate import ValidationGate
 from engine.alerts.stale_stream_monitor import mark_retired, mark_seen
+from engine.config.loader import get_config, start_config_watcher
 
 BOOTSTRAP="localhost:9092"
 TOPICS=["race.telemetry","race.timing","race.weather","race.incidents"]
@@ -46,8 +47,9 @@ def process_message(gate, message, alert_producer):
     if incident.get("active") and incident.get("incident_type") in {"SAFETY_CAR","YELLOW_FLAG"}: track_risk += 0.5
     vehicle_risk=max(0,(float(telemetry.get("engine_temperature_c",0))-105)/30)+max(0,(float(telemetry.get("brake_temperature_c",0))-500)/250)+max(0,(float(telemetry.get("battery_temperature_c",0))-55)/20)
     if not timing: return
-    signals=[("RC-001",track_risk,"Track conditions/race control indicate elevated operational risk."),
-             ("RC-002",vehicle_risk,"Vehicle telemetry indicates elevated thermal/operational risk.")]
+    cfg=get_config()["race_control"]
+    signals=[("RC-001",track_risk,"Track conditions/race control indicate elevated operational risk.",cfg["track_risk"]["warning"],cfg["track_risk"]["critical"]),
+             ("RC-002",vehicle_risk,"Vehicle telemetry indicates elevated thermal/operational risk.",cfg["vehicle_risk"]["warning"],cfg["vehicle_risk"]["critical"])]
     conn=get_connection()
     try:
         with conn.cursor() as cur:
