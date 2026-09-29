@@ -1,0 +1,260 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Latest Lap",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(MAX(lap_number),0) AS value FROM kpi_results",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Critical Alerts",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM alerts WHERE severity='critical' AND created_at >= NOW()-INTERVAL 30 MINUTE",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Strategy Signals",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM strategy_results WHERE severity <> 'none' AND created_at >= NOW()-INTERVAL 30 MINUTE",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Commercial Events",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM commercial_results WHERE created_at >= NOW()-INTERVAL 30 MINUTE",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Current Race Signals",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT car_id, MAX(lap_number) latest_lap, ROUND(MAX(delta_ms),0) pace_delta_ms\nFROM kpi_results GROUP BY car_id ORDER BY latest_lap DESC",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Latest Alerts",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT created_at time, car_id, kpi_id, severity, message\nFROM alerts ORDER BY created_at DESC LIMIT 15",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Strategy Risk Over Time",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT event_time time, car_id, value\nFROM strategy_results WHERE kpi_id='STR-001' ORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Commercial Activity",
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT event_time time, kpi_id, value\nFROM commercial_results ORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "title": "RACEPULSE Executive Command Center",
+  "uid": "racepulse-executive",
+  "version": 1
+}

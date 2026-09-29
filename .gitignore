@@ -1,0 +1,9 @@
+﻿
+.env
+
+__pycache__/
+*.pyc
+
+consumer_log.txt
+
+.pytest_cache/

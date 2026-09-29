@@ -1,0 +1,56 @@
+lap_pace_delta:
+  kpi_id: KPI-001
+  name: Lap Pace Delta
+  description: "Difference between a car's current lap time and its rolling best lap time for the race so far."
+  formula: "current_lap_time_ms - best_lap_time_ms_so_far"
+  input_fields:
+    - lap_time_ms
+  window: "per-lap (no time window; cumulative best-so-far)"
+  unit: milliseconds
+  severity_thresholds:
+    warning_ms: 500
+    critical_ms: 1500
+  enabled: true
+  version: 1
+
+gap_trend:
+  kpi_id: KPI-002
+  name: Gap Trend
+  description: "Average change in gap-to-leader per lap over the last N laps. Positive = falling behind, negative = catching up."
+  formula: "(gap_to_leader_ms[latest] - gap_to_leader_ms[oldest_in_window]) / (laps_in_window - 1)"
+  input_fields:
+    - gap_to_leader_ms
+  window: "rolling last 3 laps"
+  window_size: 3
+  unit: milliseconds_per_lap
+  severity_thresholds:
+    widening_warning_ms_per_lap: 200
+    widening_critical_ms_per_lap: 400
+  enabled: true
+  version: 1
+
+stale_stream_detection:
+  description: "Flags a car whose stream has gone quiet for longer than the threshold."
+  threshold_seconds: 15
+  poll_interval_ms: 5000
+  enabled: true
+  version: 1
+strategy:
+  tyre_risk:
+    warning: 0.75
+    critical: 1.50
+    version: 1
+  pit_window:
+    warning: 0.60
+    critical: 0.85
+    version: 1
+
+race_control:
+  track_risk:
+    warning: 0.60
+    critical: 1.20
+    version: 1
+  vehicle_risk:
+    warning: 0.60
+    critical: 1.20
+    version: 1

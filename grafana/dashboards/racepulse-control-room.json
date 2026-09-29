@@ -1,0 +1,329 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "KPI Results",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM kpi_results;",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Critical Alerts",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM alerts WHERE severity = 'critical';",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Warning Alerts",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM alerts WHERE severity = 'warning';",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Latest Lap",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT MAX(lap_number) AS value FROM kpi_results;",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Lap Pace Delta by Car",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT\n    CONCAT('Lap ', lap_number) AS lap,\n    MAX(CASE WHEN car_id = 'CAR_01' THEN delta_ms END) AS CAR_01,\n    MAX(CASE WHEN car_id = 'CAR_02' THEN delta_ms END) AS CAR_02,\n    MAX(CASE WHEN car_id = 'CAR_03' THEN delta_ms END) AS CAR_03\nFROM kpi_results\nGROUP BY lap_number\nORDER BY lap_number;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "xTickLabelRotation": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Gap Trend by Car / Lap",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT\n    CONCAT('Lap ', lap_number) AS lap,\n    MAX(CASE WHEN car_id = 'CAR_01' THEN trend_ms_per_lap END) AS CAR_01,\n    MAX(CASE WHEN car_id = 'CAR_02' THEN trend_ms_per_lap END) AS CAR_02,\n    MAX(CASE WHEN car_id = 'CAR_03' THEN trend_ms_per_lap END) AS CAR_03\nFROM gap_trend_results\nGROUP BY lap_number\nORDER BY lap_number;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "xTickLabelRotation": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "type": "piechart",
+      "title": "Alert Severity Distribution",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT\n    severity,\n    COUNT(*) AS alert_count\nFROM alerts\nGROUP BY severity\nORDER BY FIELD(severity, 'critical', 'warning', 'none');",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "pieType": "donut",
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "displayLabels": [
+          "name",
+          "percent"
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Recent Alerts",
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 12
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT\n    created_at AS time,\n    car_id AS car,\n    kpi_id AS alert_signal,\n    severity,\n    message,\n    delta_ms\nFROM alerts\nWHERE created_at >= NOW() - INTERVAL 24 HOUR\nORDER BY created_at DESC\nLIMIT 20;",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "type": "table",
+      "title": "Current Car Status",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "P8C42F0B79DF81FAF"
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT\n    kr.car_id AS car,\n    kr.lap_number AS latest_lap,\n    kr.lap_time_ms,\n    kr.best_lap_time_ms AS best_lap_ms,\n    kr.delta_ms AS pace_delta_ms,\n    kr.severity AS pace_status,\n    gt.gap_to_leader_ms AS gap_to_leader_ms,\n    gt.trend_ms_per_lap AS gap_trend_ms_per_lap,\n    gt.severity AS gap_status\nFROM kpi_results kr\nINNER JOIN (\n    SELECT\n        car_id,\n        MAX(id) AS latest_id\n    FROM kpi_results\n    GROUP BY car_id\n) latest\n    ON kr.car_id = latest.car_id\n    AND kr.id = latest.latest_id\nLEFT JOIN gap_trend_results gt\n    ON gt.car_id = kr.car_id\n    AND gt.lap_number = kr.lap_number\nORDER BY kr.car_id;"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE",
+    "motorsport",
+    "business-intelligence"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "title": "RACEPULSE Control Room",
+  "uid": "racepulse-control-room",
+  "version": 5,
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "6h",
+      "12h",
+      "24h"
+    ]
+  }
+}
