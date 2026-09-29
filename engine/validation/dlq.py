@@ -1,39 +1,30 @@
-"""
-Dead Letter Queue writer - shared responsibility (Parv/Navroop).
-Wraps a malformed/invalid event with metadata about why it failed
-and publishes it to system.dlq for later inspection.
-
-The KafkaProducer is created lazily (on first send_to_dlq call), not
-at import time. This was changed after discovering that a module-level
-KafkaProducer() made this module un-importable without Kafka already
-running - which broke automated test collection, and is generally bad
-practice (importing a module should never have network side effects).
-"""
+"""Dead-letter queue publisher with a best-effort MySQL audit record."""
 import json
 from datetime import datetime, timezone
 from kafka import KafkaProducer
+from database.connection import get_connection
 
-_producer = None
+_producer=None
 
-
-def _get_producer() -> KafkaProducer:
+def _get_producer():
     global _producer
     if _producer is None:
-        _producer = KafkaProducer(
-            bootstrap_servers="localhost:9092",
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-        )
+        _producer=KafkaProducer(bootstrap_servers="localhost:9092",
+            value_serializer=lambda v: json.dumps(v).encode())
     return _producer
 
-
-def send_to_dlq(source_topic: str, raw_key, raw_value, errors: list[str]) -> None:
-    dlq_record = {
-        "source_topic": source_topic,
-        "failed_at": datetime.now(timezone.utc).isoformat(),
-        "key": raw_key,
-        "raw_value": raw_value,
-        "errors": errors,
-    }
-    producer = _get_producer()
-    producer.send("system.dlq", value=dlq_record)
-    producer.flush()
+def send_to_dlq(source_topic, raw_key, raw_value, errors):
+    failed_at=datetime.now(timezone.utc)
+    record={"source_topic":source_topic,"failed_at":failed_at.isoformat(),
+            "key":raw_key,"raw_value":raw_value,"errors":errors}
+    _get_producer().send("system.dlq",value=record)
+    _get_producer().flush()
+    try:
+        conn=get_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO dlq_events(source_topic,raw_key,errors,failed_at) VALUES (%s,%s,%s,%s)",
+                (source_topic,raw_key,json.dumps(errors),failed_at.replace(tzinfo=None)))
+        conn.commit(); conn.close()
+    except Exception as exc:
+        print(f"DLQ audit write failed (Kafka DLQ already published): {exc}",flush=True)
