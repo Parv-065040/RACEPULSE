@@ -42,7 +42,7 @@ def compute_signals(state: dict) -> list[dict]:
     wetness = float(weather.get("track_wetness", 0.0))
     risk = degradation * 5.0 + grip_loss * 2.0 + pace_delta_s * 0.4 + wetness * 0.5
     pit_signal = min(1.0, risk / 2.0 + (0.5 if pit.get("pit_stop") else 0.0))
-    cfg=get_config()["strategy"]
+    cfg=get_config().get("strategy", {"tyre_risk":{"warning":0.75,"critical":1.50},"pit_window":{"warning":0.60,"critical":0.85}})
     return [
         {"kpi_id":"STR-001","value":risk,"warn":cfg["tyre_risk"]["warning"],"crit":cfg["tyre_risk"]["critical"],
          "message":"Tyre, pace and track conditions indicate increasing strategy risk."},
