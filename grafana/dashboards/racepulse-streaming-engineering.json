@@ -1,0 +1,192 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "DLQ Records",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) value FROM (SELECT 1 FROM alerts WHERE kpi_id='SYS-DLQ' LIMIT 1) x",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Latest Health Samples",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) value FROM stream_health WHERE observed_at>=NOW()-INTERVAL 5 MINUTE",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Critical Alerts",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) value FROM alerts WHERE severity='critical'",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Health Warnings",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) value FROM stream_health WHERE status<>'healthy' AND observed_at>=NOW()-INTERVAL 5 MINUTE",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Consumer Group Health",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT observed_at time,consumer_group,lag,status,message\nFROM stream_health ORDER BY observed_at DESC LIMIT 40",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Recent System Alerts",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT created_at time,kpi_id,car_id,severity,message\nFROM alerts WHERE kpi_id LIKE 'SYS-%'\nORDER BY created_at DESC LIMIT 30",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "title": "RACEPULSE Streaming Engineering",
+  "uid": "racepulse-streaming-engineering",
+  "version": 1
+}
