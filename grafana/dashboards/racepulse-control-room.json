@@ -284,7 +284,7 @@
       "targets": [
         {
           "format": "table",
-          "rawSql": "SELECT\n    kr.car_id AS car,\n    kr.lap_number AS latest_lap,\n    kr.lap_time_ms,\n    (kr.lap_time_ms - kr.delta_ms) AS best_lap_ms,\n    kr.delta_ms AS pace_delta_ms,\n    kr.severity AS pace_status,\n    gt.gap_to_leader_ms AS gap_to_leader_ms,\n    gt.trend_ms_per_lap AS gap_trend_ms_per_lap,\n    gt.severity AS gap_status\nFROM kpi_results kr\nINNER JOIN (\n    SELECT\n        car_id,\n        MAX(id) AS latest_id\n    FROM kpi_results\n    GROUP BY car_id\n) latest\n    ON kr.car_id = latest.car_id\n    AND kr.id = latest.latest_id\nLEFT JOIN gap_trend_results gt\n    ON gt.car_id = kr.car_id\n    AND gt.lap_number = kr.lap_number\nORDER BY kr.car_id;"
+          "rawSql": "SELECT\n    kr.car_id AS car,\n    kr.lap_number AS latest_lap,\n    kr.lap_time_ms,\n    kr.best_lap_time_ms AS best_lap_ms,\n    kr.delta_ms AS pace_delta_ms,\n    kr.severity AS pace_status,\n    gt.gap_to_leader_ms AS gap_to_leader_ms,\n    gt.trend_ms_per_lap AS gap_trend_ms_per_lap,\n    gt.severity AS gap_status\nFROM kpi_results kr\nINNER JOIN (\n    SELECT\n        car_id,\n        MAX(id) AS latest_id\n    FROM kpi_results\n    GROUP BY car_id\n) latest\n    ON kr.car_id = latest.car_id\n    AND kr.id = latest.latest_id\nLEFT JOIN gap_trend_results gt\n    ON gt.car_id = kr.car_id\n    AND gt.lap_number = kr.lap_number\nORDER BY kr.car_id;"
         }
       ],
       "options": {
