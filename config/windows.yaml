@@ -1,0 +1,8 @@
+performance:
+  gap_trend_laps: 3
+strategy:
+  evaluation: latest_available_event_context
+race_control:
+  evaluation: latest_available_event_context
+commercial:
+  evaluation: per_event

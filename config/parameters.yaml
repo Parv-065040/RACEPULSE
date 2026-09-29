@@ -1,0 +1,4 @@
+demo:
+  lap_delay_seconds: 1.0
+  stale_stream_seconds: 15
+  consumer_lag_warning: 100

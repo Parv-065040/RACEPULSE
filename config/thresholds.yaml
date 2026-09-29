@@ -35,3 +35,22 @@ stale_stream_detection:
   poll_interval_ms: 5000
   enabled: true
   version: 1
+strategy:
+  tyre_risk:
+    warning: 0.75
+    critical: 1.50
+    version: 1
+  pit_window:
+    warning: 0.60
+    critical: 0.85
+    version: 1
+
+race_control:
+  track_risk:
+    warning: 0.60
+    critical: 1.20
+    version: 1
+  vehicle_risk:
+    warning: 0.60
+    critical: 1.20
+    version: 1

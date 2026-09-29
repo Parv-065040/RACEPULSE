@@ -13,7 +13,7 @@ from engine.config.loader import start_config_watcher
 from engine.formulas.lap_pace_delta import compute_lap_pace_delta
 from engine.formulas.gap_trend import compute_gap_trend
 from engine.alerts.alert_engine import raise_alert_if_needed
-from engine.alerts.stale_stream_monitor import mark_seen, check_for_stale_cars
+from engine.alerts.stale_stream_monitor import mark_seen, mark_retired, check_for_stale_cars
 from engine.validation.dlq import send_to_dlq
 from database.writer import write_kpi_result, write_gap_trend_result
 
@@ -68,7 +68,7 @@ def main():
     start_config_watcher()
 
     consumer = KafkaConsumer(
-        "race.timing",
+        "race.timing",\n        "race.incidents",
         bootstrap_servers="localhost:9092",
         group_id="performance-consumer",
         auto_offset_reset="earliest",

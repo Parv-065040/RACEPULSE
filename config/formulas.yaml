@@ -1,0 +1,31 @@
+strategy:
+  STR-001:
+    name: Tyre Degradation Risk
+    formula: "degradation_per_lap*5 + grip_loss*2 + pace_delta_seconds*0.4 + track_wetness*0.5"
+    version: 1
+  STR-002:
+    name: Pit Window Signal
+    formula: "min(1, strategy_risk/2 + pit_stop_bonus)"
+    version: 1
+race_control:
+  RC-001:
+    name: Track Risk
+    formula: "track_wetness*0.7 + grip_loss*0.7 + race_control_incident_bonus"
+    version: 1
+  RC-002:
+    name: Vehicle Risk
+    formula: "engine_overtemp/30 + brake_overtemp/250 + battery_overtemp/20"
+    version: 1
+commercial:
+  COM-001:
+    name: Fan Engagement Rate
+    formula: "(likes+comments+shares+merch_clicks)/viewers"
+    version: 1
+  COM-002:
+    name: Sponsor Visibility
+    formula: "visibility_seconds"
+    version: 1
+  COM-003:
+    name: Sponsor Conversion Rate
+    formula: "conversions/max(1,clicks)"
+    version: 1

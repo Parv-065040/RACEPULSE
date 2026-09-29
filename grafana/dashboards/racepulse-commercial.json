@@ -1,0 +1,260 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Fan Events",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) value FROM commercial_results WHERE kpi_id='COM-001'",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Sponsor Exposure Events",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) value FROM commercial_results WHERE kpi_id='COM-002'",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Latest Engagement Rate",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT ROUND(MAX(value)*100,2) value FROM commercial_results WHERE kpi_id='COM-001'",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Total Visibility (s)",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT ROUND(SUM(value),1) value FROM commercial_results WHERE kpi_id='COM-002'",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Sponsor Exposure",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT event_time time,sponsor_id entity,ROUND(value,1) visibility_seconds\nFROM commercial_results WHERE kpi_id='COM-002'\nORDER BY event_time DESC LIMIT 30",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Fan Engagement",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT event_time time,car_id entity,ROUND(value*100,2) engagement_percent\nFROM commercial_results WHERE kpi_id='COM-001'\nORDER BY event_time DESC LIMIT 30",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Fan Engagement Rate",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT event_time time,car_id,value*100 engagement_percent\nFROM commercial_results WHERE kpi_id='COM-001' ORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Sponsor Visibility",
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT event_time time,entity_id,value\nFROM commercial_results WHERE kpi_id='COM-002' ORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "title": "RACEPULSE Commercial Intelligence",
+  "uid": "racepulse-commercial",
+  "version": 1
+}
