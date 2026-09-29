@@ -53,8 +53,8 @@ def process_message(gate, message, alert_producer):
     conn=get_connection()
     try:
         with conn.cursor() as cur:
-            for kpi_id,value,msg in signals:
-                level=sev(value); eid=str(uuid.uuid4())
+            for kpi_id,value,msg,warning,critical in signals:
+                level=sev(value, warning, critical); eid=str(uuid.uuid4())
                 cur.execute(INSERT_SQL,(kpi_id,eid,car_id,event.get("lap_number",timing.get("lap_number",0)),
                                         round(value,4),level,msg,datetime.fromisoformat(event["event_time"]).replace(tzinfo=None)))
                 if level!="none":
@@ -65,6 +65,7 @@ def process_message(gate, message, alert_producer):
     finally: conn.close()
 
 def run():
+    start_config_watcher()
     consumer=KafkaConsumer(*TOPICS,bootstrap_servers=BOOTSTRAP,group_id=GROUP_ID,
                            auto_offset_reset="latest",enable_auto_commit=True)
     producer=KafkaProducer(bootstrap_servers=BOOTSTRAP,key_serializer=lambda k:k,
@@ -79,3 +80,4 @@ def run():
         consumer.close(); producer.close()
 
 if __name__=="__main__": run()
+
