@@ -1,51 +1,52 @@
-"""
-Streaming infrastructure monitor.
-
-Checks Kafka consumer-group lag and database reachability, then writes a
-small operational time series to MySQL. This is intentionally separate
-from race analytics so an unhealthy analytics consumer cannot hide its own
-health state.
-"""
-from __future__ import annotations
+"""Kafka consumer lag and MySQL health monitor."""
 import time
 from kafka import KafkaAdminClient, KafkaConsumer
 from database.connection import get_connection
 
 BOOTSTRAP="localhost:9092"
 GROUPS=["performance-consumer","strategy-consumer","race-control-consumer","commercial-consumer"]
-TOPICS=["race.timing","race.tyres","race.weather","race.pitstops","race.telemetry","race.incidents","business.fans","business.sponsors"]
+LAG_WARNING=100
 
-def group_lag(admin, group):
+def group_lag(admin,group):
     try:
         offsets=admin.list_consumer_group_offsets(group)
     except Exception:
         return None
-    lag=0
-    for tp,offset_meta in offsets.items():
-        try:
-            end=KafkaConsumer(bootstrap_servers=BOOTSTRAP).end_offsets([tp])[tp]
-            lag += max(0,end-offset_meta.offset)
-        except Exception:
-            continue
-    return lag
+    consumer=KafkaConsumer(bootstrap_servers=BOOTSTRAP)
+    try:
+        end_offsets=consumer.end_offsets(list(offsets))
+        return sum(max(0,end_offsets[tp]-meta.offset) for tp,meta in offsets.items())
+    finally:
+        consumer.close()
 
 def run(interval=5):
     while True:
-        observed=time.time()
         admin=KafkaAdminClient(bootstrap_servers=BOOTSTRAP,client_id="racepulse-health")
+        conn=None
         try:
             conn=get_connection()
             with conn.cursor() as cur:
                 for group in GROUPS:
                     lag=group_lag(admin,group)
-                    status="healthy" if lag is not None and lag < 100 else "warning" if lag is not None else "unknown"
+                    status="healthy" if lag is not None and lag<LAG_WARNING else "warning" if lag is not None else "unknown"
+                    message=("Consumer group lag within threshold." if status=="healthy"
+                             else "Consumer lag requires investigation." if status=="warning"
+                             else "Consumer group offsets unavailable.")
                     cur.execute(
                         "INSERT INTO stream_health(component,consumer_group,lag,status,message) VALUES (%s,%s,%s,%s,%s)",
-                        ("kafka-consumer",group,lag,status,
-                         "Consumer group lag within demo threshold." if status=="healthy" else "Review consumer health and Kafka lag.")
-                    )
-                conn.commit(); conn.close()
+                        ("kafka-consumer",group,lag,status,message))
+                    if status!="healthy":
+                        cur.execute(
+                            "INSERT INTO infra_alerts(signal,severity,component,message) VALUES (%s,%s,%s,%s)",
+                            ("CONSUMER_LAG","warning" if status=="warning" else "critical",
+                             group,message))
+                conn.commit()
+        except Exception as exc:
+            if conn:
+                conn.rollback()
+            print(f"[stream-monitor] health check failed: {exc}",flush=True)
         finally:
+            if conn: conn.close()
             admin.close()
         time.sleep(interval)
 
