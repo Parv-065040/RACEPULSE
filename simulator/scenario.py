@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
 from enum import Enum
+
+from engine.config.car_loader import get_known_car_ids
 
 
 class ScenarioType(str, Enum):
@@ -15,6 +17,16 @@ class ScenarioType(str, Enum):
     CONFIGURATION_FAILURE = "CONFIGURATION_FAILURE"
 
 
+def _default_failure_car() -> str:
+    cars = sorted(get_known_car_ids())
+    return cars[-1]
+
+
+def _default_pitstop_car() -> str:
+    cars = sorted(get_known_car_ids())
+    return cars[0]
+
+
 @dataclass(frozen=True)
 class ScenarioConfig:
     name: ScenarioType
@@ -23,9 +35,9 @@ class ScenarioConfig:
     safety_car_gap_factor: float = 1.0
     close_battle_gap_ms: int = 1000
     close_battle_gap_change_ms: int = 100
-    mechanical_failure_car_id: str = "CAR_03"
+    mechanical_failure_car_id: str = _default_failure_car()
     mechanical_failure_lap: int = 3
-    pitstop_car_id: str = "CAR_01"
+    pitstop_car_id: str = _default_pitstop_car()
     pitstop_lap: int = 2
 
 
@@ -62,14 +74,14 @@ def create_scenario(
     if scenario == ScenarioType.MECHANICAL_FAILURE:
         return ScenarioConfig(
             name=scenario,
-            mechanical_failure_car_id="CAR_03",
+            mechanical_failure_car_id=_default_failure_car(),
             mechanical_failure_lap=3,
         )
 
     if scenario == ScenarioType.PIT_STOP:
         return ScenarioConfig(
             name=scenario,
-            pitstop_car_id="CAR_01",
+            pitstop_car_id=_default_pitstop_car(),
             pitstop_lap=2,
         )
 

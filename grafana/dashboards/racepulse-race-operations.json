@@ -240,6 +240,42 @@
           "mode": "multi"
         }
       }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Average Vehicle Speed (15s)",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "racepulse-mysql"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT\n  window_start AS time,\n  car_id,\n  value AS avg_speed_kmh\nFROM windowed_kpi_results\nWHERE kpi_id = 'KPI-003'\n  AND $__timeFilter(window_start)\nORDER BY window_start",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kmh"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
     }
   ],
   "schemaVersion": 39,
@@ -256,5 +292,5 @@
   "refresh": "5s",
   "title": "RACEPULSE Race Operations",
   "uid": "racepulse-race-operations",
-  "version": 1
+  "version": 6
 }

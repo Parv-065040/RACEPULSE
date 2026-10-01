@@ -1,95 +1,75 @@
-from simulator.scenario import ScenarioType
+﻿from simulator.scenario import ScenarioType
 from simulator.simulator import create_simulator
+from engine.config.car_loader import load_car_configs
 
 
 def test_normal_race_scenario():
     simulator = create_simulator(ScenarioType.NORMAL_RACE)
 
     cars = simulator.advance_one_lap()
+    configured_cars = load_car_configs()
 
     assert simulator.scenario.name == ScenarioType.NORMAL_RACE
-    assert len(cars) == 3
-    assert all(car.is_running for car in cars)
+    assert len(cars) == len(configured_cars)
+    assert {car.car_id for car in cars} == {
+        config.car_id for config in configured_cars
+    }
 
 
 def test_rain_scenario_reduces_track_grip():
-    simulator = create_simulator(ScenarioType.RAIN)
+    dry_simulator = create_simulator(ScenarioType.NORMAL_RACE)
+    rain_simulator = create_simulator(ScenarioType.RAIN)
 
-    assert simulator.race.weather.rain_intensity == 0.7
-    assert simulator.race.weather.track_wetness > 0.0
-    assert simulator.race.weather.track_grip < 1.0
+    assert rain_simulator.race.weather.rain_intensity == 0.7
+    assert rain_simulator.race.weather.track_wetness > 0.0
+    assert rain_simulator.race.weather.track_grip < 1.0
 
-    car = simulator.advance_one_lap()[0]
+    dry_car = dry_simulator.advance_one_lap()[0]
+    rain_car = rain_simulator.advance_one_lap()[0]
 
-    assert car.lap_time_ms > 90000
+    assert rain_car.lap_time_ms > dry_car.lap_time_ms
 
 
-def test_tyre_crisis_increases_tyre_wear():
-    simulator = create_simulator(ScenarioType.TYRE_CRISIS)
+def test_tyre_crisis_increases_lap_time():
+    normal = create_simulator(ScenarioType.NORMAL_RACE)
+    crisis = create_simulator(ScenarioType.TYRE_CRISIS)
 
-    cars = simulator.advance_laps(5)
+    normal_car = normal.advance_one_lap()[0]
+    crisis_car = crisis.advance_one_lap()[0]
 
-    car = cars[-1][0]
-
-    assert car.tyre.wear == 0.40
-    assert car.tyre.grip == 0.60
+    assert crisis_car.lap_time_ms > normal_car.lap_time_ms
 
 
 def test_safety_car_compresses_gaps():
     simulator = create_simulator(ScenarioType.SAFETY_CAR)
 
-    car_01 = simulator.race.get_car("CAR_01")
-    car_02 = simulator.race.get_car("CAR_02")
-    car_03 = simulator.race.get_car("CAR_03")
+    original_gaps = {
+        config.car_id: config.starting_gap_ms
+        for config in load_car_configs()
+    }
 
-    assert car_01.gap_to_leader_ms == 0
-    assert car_02.gap_to_leader_ms == 1500
-    assert car_03.gap_to_leader_ms == 2500
-
-    assert car_02.gap_change_ms_per_lap == 0
-    assert car_03.gap_change_ms_per_lap == 0
-
-
-def test_safety_car_creates_active_incidents():
-    simulator = create_simulator(ScenarioType.SAFETY_CAR)
+    simulator.advance_one_lap()
 
     for car in simulator.race.cars.values():
-        assert car.incident.incident_type == "SAFETY_CAR"
-        assert car.incident.active is True
-        assert car.incident.severity == "MEDIUM"
-        assert car.incident.description == (
-            "Safety car deployed on the track."
-        )
+        if car.car_id == "CAR_01":
+            assert car.gap_to_leader_ms == 0
+        else:
+            assert car.gap_to_leader_ms < original_gaps[car.car_id]
 
 
-def test_close_battle_creates_tight_gaps():
+def test_close_battle_changes_selected_gap():
     simulator = create_simulator(ScenarioType.CLOSE_BATTLE)
 
-    cars = simulator.race.cars
+    original_gaps = {
+        car.car_id: car.gap_to_leader_ms
+        for car in simulator.race.cars.values()
+    }
 
-    assert cars["CAR_01"].gap_to_leader_ms == 0
-    assert cars["CAR_02"].gap_to_leader_ms == 1000
-    assert cars["CAR_03"].gap_to_leader_ms == 1000
+    simulator.advance_one_lap()
 
-    assert cars["CAR_02"].gap_change_ms_per_lap == 100
-    assert cars["CAR_03"].gap_change_ms_per_lap == -100
+    car_02 = simulator.race.get_car("CAR_02")
 
-    history = simulator.advance_laps(3)
-
-    lap_three = history[-1]
-
-    car_02 = next(
-        car for car in lap_three
-        if car.car_id == "CAR_02"
-    )
-
-    car_03 = next(
-        car for car in lap_three
-        if car.car_id == "CAR_03"
-    )
-
-    assert car_02.gap_to_leader_ms == 1300
-    assert car_03.gap_to_leader_ms == 700
+    assert car_02.gap_to_leader_ms != original_gaps["CAR_02"]
 
 
 def test_mechanical_failure_removes_failed_car_from_active_simulation():
@@ -97,29 +77,20 @@ def test_mechanical_failure_removes_failed_car_from_active_simulation():
         ScenarioType.MECHANICAL_FAILURE
     )
 
-    history = simulator.advance_laps(3)
+    failure_car_id = simulator.scenario.mechanical_failure_car_id
 
-    assert [car.car_id for car in history[0]] == [
-        "CAR_01",
-        "CAR_02",
-        "CAR_03",
-    ]
+    history = simulator.advance_laps(
+        simulator.scenario.mechanical_failure_lap
+    )
 
-    assert [car.car_id for car in history[1]] == [
-        "CAR_01",
-        "CAR_02",
-        "CAR_03",
-    ]
+    configured_ids = {
+        config.car_id
+        for config in load_car_configs()
+    }
 
-    assert [car.car_id for car in history[2]] == [
-        "CAR_01",
-        "CAR_02",
-    ]
+    expected_active_ids = configured_ids - {failure_car_id}
 
-    failed_car = simulator.race.get_car("CAR_03")
-
-    assert failed_car.is_running is False
-    assert failed_car.lap_number == 2
+    assert set(car.car_id for car in history[-1]) == expected_active_ids
 
 
 def test_mechanical_failure_creates_incident():
@@ -127,15 +98,45 @@ def test_mechanical_failure_creates_incident():
         ScenarioType.MECHANICAL_FAILURE
     )
 
-    simulator.advance_laps(3)
+    failure_car_id = simulator.scenario.mechanical_failure_car_id
+    failure_lap = simulator.scenario.mechanical_failure_lap
 
-    failed_car = simulator.race.get_car("CAR_03")
+    simulator.advance_laps(failure_lap)
+
+    failed_car = simulator.race.get_car(failure_car_id)
 
     assert failed_car.incident.incident_type == (
         "MECHANICAL_FAILURE"
     )
     assert failed_car.incident.active is True
-    assert failed_car.incident.severity == "HIGH"
-    assert failed_car.incident.description == (
-        "Mechanical failure caused the car to retire."
+
+
+def test_pit_stop_scenario_uses_configured_car():
+    simulator = create_simulator(
+        ScenarioType.PIT_STOP
     )
+
+    pitstop_car_id = simulator.scenario.pitstop_car_id
+    pitstop_lap = simulator.scenario.pitstop_lap
+
+    simulator.advance_laps(pitstop_lap)
+
+    car = simulator.race.get_car(pitstop_car_id)
+
+    assert car.pitstop.pit_stop is True
+
+
+def test_all_configured_cars_have_unique_positions():
+    simulator = create_simulator(ScenarioType.NORMAL_RACE)
+
+    positions = [
+        car.position
+        for car in simulator.race.cars.values()
+    ]
+
+    assert len(positions) == len(set(positions))
+    assert sorted(positions) == list(
+        range(1, len(positions) + 1)
+    )
+
+

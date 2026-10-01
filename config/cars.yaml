@@ -1,0 +1,192 @@
+﻿cars:
+  CAR_01:
+    name: "Apex One"
+    pace_ms: 88000
+    starting_gap_ms: 0
+    starting_position: 1
+    degradation_ms_per_lap: 120
+    gap_change_ms_per_lap: 0
+    top_speed_kmh: 345
+    acceleration_factor: 1.00
+    tyre_management: 0.92
+    fuel_efficiency: 0.88
+    wet_weather_performance: 0.90
+    mechanical_reliability: 0.97
+    aggression: 0.55
+    sponsor_id: "SPONSOR_01"
+
+  CAR_02:
+    name: "Vortex Racing"
+    pace_ms: 89000
+    starting_gap_ms: 1800
+    starting_position: 2
+    degradation_ms_per_lap: 185
+    gap_change_ms_per_lap: 180
+    top_speed_kmh: 342
+    acceleration_factor: 1.01
+    tyre_management: 0.72
+    fuel_efficiency: 0.84
+    wet_weather_performance: 0.82
+    mechanical_reliability: 0.94
+    aggression: 0.72
+    sponsor_id: "SPONSOR_02"
+
+  CAR_03:
+    name: "Velocity Motorsport"
+    pace_ms: 87500
+    starting_gap_ms: 3200
+    starting_position: 3
+    degradation_ms_per_lap: 210
+    gap_change_ms_per_lap: -120
+    top_speed_kmh: 338
+    acceleration_factor: 1.03
+    tyre_management: 0.68
+    fuel_efficiency: 0.80
+    wet_weather_performance: 0.86
+    mechanical_reliability: 0.91
+    aggression: 0.82
+    sponsor_id: "SPONSOR_03"
+
+  CAR_04:
+    name: "EcoDrive GP"
+    pace_ms: 90500
+    starting_gap_ms: 5200
+    starting_position: 4
+    degradation_ms_per_lap: 110
+    gap_change_ms_per_lap: 80
+    top_speed_kmh: 330
+    acceleration_factor: 0.96
+    tyre_management: 0.91
+    fuel_efficiency: 0.98
+    wet_weather_performance: 0.80
+    mechanical_reliability: 0.98
+    aggression: 0.38
+    sponsor_id: "SPONSOR_04"
+
+  CAR_05:
+    name: "Velocity Works"
+    pace_ms: 90000
+    starting_gap_ms: 6800
+    starting_position: 5
+    degradation_ms_per_lap: 155
+    gap_change_ms_per_lap: 120
+    top_speed_kmh: 352
+    acceleration_factor: 1.02
+    tyre_management: 0.76
+    fuel_efficiency: 0.79
+    wet_weather_performance: 0.68
+    mechanical_reliability: 0.93
+    aggression: 0.70
+    sponsor_id: "SPONSOR_05"
+
+  CAR_06:
+    name: "Northstar Racing"
+    pace_ms: 91500
+    starting_gap_ms: 8200
+    starting_position: 6
+    degradation_ms_per_lap: 105
+    gap_change_ms_per_lap: 40
+    top_speed_kmh: 325
+    acceleration_factor: 0.94
+    tyre_management: 0.95
+    fuel_efficiency: 0.93
+    wet_weather_performance: 0.89
+    mechanical_reliability: 0.99
+    aggression: 0.25
+    sponsor_id: "SPONSOR_06"
+
+  CAR_07:
+    name: "RainForce GP"
+    pace_ms: 92000
+    starting_gap_ms: 9800
+    starting_position: 7
+    degradation_ms_per_lap: 135
+    gap_change_ms_per_lap: 100
+    top_speed_kmh: 326
+    acceleration_factor: 0.97
+    tyre_management: 0.87
+    fuel_efficiency: 0.86
+    wet_weather_performance: 1.00
+    mechanical_reliability: 0.95
+    aggression: 0.52
+    sponsor_id: "SPONSOR_07"
+
+  CAR_08:
+    name: "Titan Motorsport"
+    pace_ms: 91000
+    starting_gap_ms: 11200
+    starting_position: 8
+    degradation_ms_per_lap: 170
+    gap_change_ms_per_lap: 180
+    top_speed_kmh: 340
+    acceleration_factor: 1.00
+    tyre_management: 0.73
+    fuel_efficiency: 0.81
+    wet_weather_performance: 0.74
+    mechanical_reliability: 0.72
+    aggression: 0.67
+    sponsor_id: "SPONSOR_08"
+
+  CAR_09:
+    name: "Endurance Racing"
+    pace_ms: 92500
+    starting_gap_ms: 12600
+    starting_position: 9
+    degradation_ms_per_lap: 85
+    gap_change_ms_per_lap: 20
+    top_speed_kmh: 328
+    acceleration_factor: 0.95
+    tyre_management: 0.99
+    fuel_efficiency: 0.95
+    wet_weather_performance: 0.88
+    mechanical_reliability: 0.98
+    aggression: 0.30
+    sponsor_id: "SPONSOR_09"
+
+  CAR_10:
+    name: "Midland GP"
+    pace_ms: 93000
+    starting_gap_ms: 14000
+    starting_position: 10
+    degradation_ms_per_lap: 145
+    gap_change_ms_per_lap: 110
+    top_speed_kmh: 332
+    acceleration_factor: 0.98
+    tyre_management: 0.80
+    fuel_efficiency: 0.85
+    wet_weather_performance: 0.78
+    mechanical_reliability: 0.90
+    aggression: 0.50
+    sponsor_id: "SPONSOR_10"
+
+  CAR_11:
+    name: "Raptor Racing"
+    pace_ms: 91000
+    starting_gap_ms: 15500
+    starting_position: 11
+    degradation_ms_per_lap: 190
+    gap_change_ms_per_lap: 160
+    top_speed_kmh: 344
+    acceleration_factor: 1.04
+    tyre_management: 0.65
+    fuel_efficiency: 0.77
+    wet_weather_performance: 0.70
+    mechanical_reliability: 0.88
+    aggression: 0.98
+    sponsor_id: "SPONSOR_11"
+
+  CAR_12:
+    name: "Phoenix Motorsport"
+    pace_ms: 91800
+    starting_gap_ms: 17000
+    starting_position: 12
+    degradation_ms_per_lap: 150
+    gap_change_ms_per_lap: 70
+    top_speed_kmh: 335
+    acceleration_factor: 1.00
+    tyre_management: 0.82
+    fuel_efficiency: 0.87
+    wet_weather_performance: 0.83
+    mechanical_reliability: 0.86
+    aggression: 0.62
+    sponsor_id: "SPONSOR_12"

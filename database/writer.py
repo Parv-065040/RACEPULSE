@@ -71,3 +71,59 @@ def write_gap_trend_result(kpi: dict, event: dict) -> None:
             kpi["severity"],
             event_time,
         ))
+_WINDOWED_KPI_INSERT = """
+INSERT INTO windowed_kpi_results
+(
+    kpi_id,
+    window_id,
+    car_id,
+    window_start,
+    window_end,
+    event_count,
+    value,
+    unit,
+    severity,
+    message
+)
+VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+ON DUPLICATE KEY UPDATE
+    event_count=VALUES(event_count),
+    value=VALUES(value),
+    severity=VALUES(severity),
+    message=VALUES(message)
+"""
+
+
+def write_windowed_kpi_result(
+    *,
+    kpi_id: str,
+    window_id: str,
+    car_id: str,
+    window_start,
+    window_end,
+    event_count: int,
+    value: float,
+    unit: str,
+    severity: str,
+    message: str,
+) -> None:
+    conn = _get_conn()
+
+    with conn.cursor() as cursor:
+        cursor.execute(
+            _WINDOWED_KPI_INSERT,
+            (
+                kpi_id,
+                window_id,
+                car_id,
+                window_start.replace(tzinfo=None),
+                window_end.replace(tzinfo=None),
+                event_count,
+                round(value, 4),
+                unit,
+                severity,
+                message,
+            ),
+        )
+
+    conn.commit()

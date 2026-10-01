@@ -1,8 +1,86 @@
-def test_fan_engagement_formula():
-    viewers=50000
-    interactions=6000+1000+500+250
-    assert round(interactions/viewers,4)==0.155
 
-def test_sponsor_conversion_is_zero_safe():
-    clicks=0
-    assert clicks/max(1,clicks)==0
+import consumers.commercial.commercial_consumer as commercial
+
+
+def test_com001_uses_configured_warning_threshold(monkeypatch):
+    monkeypatch.setattr(
+        commercial,
+        "get_config",
+        lambda: {
+            "commercial": {
+                "COM-001": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+                "COM-003": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+            }
+        },
+    )
+
+    assert commercial.commercial_severity("COM-001", 0.10) == "warning"
+
+
+def test_com001_becomes_critical_at_configured_threshold(monkeypatch):
+    monkeypatch.setattr(
+        commercial,
+        "get_config",
+        lambda: {
+            "commercial": {
+                "COM-001": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+                "COM-003": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+            }
+        },
+    )
+
+    assert commercial.commercial_severity("COM-001", 1.00) == "critical"
+
+
+def test_com003_uses_configured_threshold(monkeypatch):
+    monkeypatch.setattr(
+        commercial,
+        "get_config",
+        lambda: {
+            "commercial": {
+                "COM-001": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+                "COM-003": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+            }
+        },
+    )
+
+    assert commercial.commercial_severity("COM-003", 0.10) == "warning"
+
+
+def test_com003_below_warning_is_none(monkeypatch):
+    monkeypatch.setattr(
+        commercial,
+        "get_config",
+        lambda: {
+            "commercial": {
+                "COM-001": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+                "COM-003": {
+                    "warning": 0.01,
+                    "critical": 1.00,
+                },
+            }
+        },
+    )
+
+    assert commercial.commercial_severity("COM-003", 0.005) == "none"

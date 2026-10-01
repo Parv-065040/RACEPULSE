@@ -1,4 +1,4 @@
-﻿"""
+"""
 Integration test: DLQ routing actually publishes to Kafka.
 
 Tests engine.validation.dlq.send_to_dlq directly against the real
@@ -40,7 +40,7 @@ def test_send_to_dlq_publishes_a_readable_message():
     found = False
     for message in consumer:
         record = message.value
-        if isinstance(record.get("raw_value"), dict) and record["raw_value"].get("_test_marker") == marker:
+        if record.get("raw_value", {}).get("_test_marker") == marker:
             found = True
             assert record["source_topic"] == "race.timing"
             assert record["key"] == "CAR_TEST"

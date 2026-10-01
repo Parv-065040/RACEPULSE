@@ -17,6 +17,8 @@ from datetime import datetime
 from kafka import KafkaConsumer, KafkaProducer
 from database.connection import get_connection
 from engine.validation.gate import ValidationGate
+from engine.config.loader import get_config, start_config_watcher
+from engine.rules.severity_rules import evaluate_severity
 
 BOOTSTRAP="localhost:9092"
 TOPICS=["business.fans","business.sponsors"]
@@ -28,6 +30,16 @@ VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
 ON DUPLICATE KEY UPDATE value=VALUES(value), severity=VALUES(severity),
 message=VALUES(message), event_time=VALUES(event_time)
 """
+
+def commercial_severity(kpi_id, value):
+    cfg = get_config()
+    block = cfg["commercial"][kpi_id]
+    return evaluate_severity(
+        value,
+        block["warning"],
+        block["critical"],
+    )
+
 
 def process_message(gate, message, alert_producer):
     event=gate.check(message.topic,message.key,message.value)
@@ -57,7 +69,7 @@ def process_message(gate, message, alert_producer):
         with conn.cursor() as cur:
             for kpi_id,value,unit,message_text in signals:
                 eid=str(uuid.uuid4())
-                severity="warning" if (unit=="rate" and value>=0.01) else "none"
+                severity = commercial_severity(kpi_id, value) if unit == "rate" else "none"
                 cur.execute(INSERT_SQL,(
                     kpi_id,eid,event["car_id"],entity_id,event["lap_number"],
                     round(value,6),unit,severity,message_text,
@@ -77,6 +89,7 @@ def run():
     producer=KafkaProducer(bootstrap_servers=BOOTSTRAP,key_serializer=lambda k:k,
                            value_serializer=lambda v:json.dumps(v).encode())
     gate=ValidationGate()
+    start_config_watcher()
     print(f"[commercial-consumer] listening on {TOPICS}",flush=True)
     try:
         while True:

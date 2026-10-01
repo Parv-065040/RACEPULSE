@@ -1,8 +1,26 @@
+# Time-window configuration
+#
+# The default tumbling window required by the Streaming Data Analytics
+# assignment is 15 seconds.
+#
+# Existing domain-specific windows remain unchanged.
+
+tumbling:
+  default_seconds: 15
+  short_seconds: 5
+  medium_seconds: 30
+  long_seconds: 60
+  allowed_lateness_seconds: 0
+  idle_flush_seconds: 5
+
 performance:
   gap_trend_laps: 3
+
 strategy:
   evaluation: latest_available_event_context
+
 race_control:
   evaluation: latest_available_event_context
+
 commercial:
   evaluation: per_event

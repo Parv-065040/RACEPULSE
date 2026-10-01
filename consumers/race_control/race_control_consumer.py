@@ -27,6 +27,14 @@ ON DUPLICATE KEY UPDATE value=VALUES(value), severity=VALUES(severity),
 message=VALUES(message), event_time=VALUES(event_time)
 """
 
+ALERTS_INSERT_SQL = """
+INSERT INTO alerts
+    (kpi_id,event_id,car_id,severity,message,delta_ms,event_time)
+VALUES (%s,%s,%s,%s,%s,%s,%s)
+ON DUPLICATE KEY UPDATE severity=VALUES(severity), message=VALUES(message),
+delta_ms=VALUES(delta_ms), event_time=VALUES(event_time)
+"""
+
 def sev(value, warning=0.6, critical=1.2):
     return "critical" if value>=critical else "warning" if value>=warning else "none"
 
@@ -58,6 +66,7 @@ def process_message(gate, message, alert_producer):
                 cur.execute(INSERT_SQL,(kpi_id,eid,car_id,event.get("lap_number",timing.get("lap_number",0)),
                                         round(value,4),level,msg,datetime.fromisoformat(event["event_time"]).replace(tzinfo=None)))
                 if level!="none":
+                    cur.execute(ALERTS_INSERT_SQL,(kpi_id,eid,car_id,level,msg,int(round(value*1000)),datetime.fromisoformat(event["event_time"]).replace(tzinfo=None)))
                     alert_producer.send("analytics.alerts",key=car_id.encode(),value={
                         "kpi_id":kpi_id,"event_id":eid,"car_id":car_id,"severity":level,
                         "signal":msg,"value":round(value,4),"event_time":event["event_time"]})

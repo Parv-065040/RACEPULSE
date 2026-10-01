@@ -16,7 +16,6 @@ from simulator.telemetry_state import (
 )
 from simulator.tyre_state import TyreState, create_default_tyre
 from simulator.weather_state import WeatherState, create_default_weather
-from engine.race.ranking import RaceRanking
 
 
 GRIP_PENALTY_MS = 500
@@ -34,7 +33,6 @@ class CarState:
     tyre_management: float = 0.75
     wet_weather_performance: float = 1.0
     pit_time_loss_ms: int = 0
-    race_time_ms: int = 0
     is_running: bool = True
     tyre: TyreState = field(default_factory=create_default_tyre)
     telemetry: TelemetryState = field(
@@ -52,7 +50,6 @@ class CarState:
 class RaceState:
     cars: dict[str, CarState] = field(default_factory=dict)
     weather: WeatherState = field(default_factory=create_default_weather)
-    ranking: RaceRanking = field(default_factory=RaceRanking)
 
     def add_car(self, car: CarState) -> None:
         self.cars[car.car_id] = car
@@ -136,9 +133,6 @@ class RaceState:
         # Pit loss applies to the pit-stop lap only.
         car.pit_time_loss_ms = 0
 
-        # Accumulate actual race time for dynamic race ranking.
-        car.race_time_ms += lap_time_ms
-
         gap_to_leader_ms = (
             car.gap_to_leader_ms
             + car.gap_change_ms_per_lap
@@ -162,10 +156,6 @@ class RaceState:
             updated_cars.append(updated_car)
 
         return updated_cars
-
-    def update_ranking(self) -> None:
-        """Recalculate active race positions and gaps."""
-        self.ranking.update(self.cars.values())
 
     def simulate_laps(
         self,
@@ -197,7 +187,6 @@ class RaceState:
                 lap_time_ms=config.pace_ms,
                 gap_to_leader_ms=config.starting_gap_ms,
                 position=config.starting_position,
-                race_time_ms=config.starting_gap_ms,
                 degradation_ms_per_lap=config.degradation_ms_per_lap,
                 gap_change_ms_per_lap=config.gap_change_ms_per_lap,
                 tyre_management=config.tyre_management,

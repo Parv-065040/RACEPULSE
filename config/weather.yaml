@@ -1,0 +1,72 @@
+﻿weather:
+  enabled: true
+
+  race_laps: 58
+
+  phases:
+    - name: DRY
+      start_lap: 1
+      end_lap: 15
+      rain_intensity: 0.00
+      air_temperature_c: 29.0
+      track_temperature_c: 42.0
+      humidity_pct: 48.0
+      wind_speed_kmh: 12.0
+      visibility_km: 10.0
+
+    - name: OVERCAST
+      start_lap: 16
+      end_lap: 25
+      rain_intensity: 0.05
+      air_temperature_c: 27.0
+      track_temperature_c: 37.0
+      humidity_pct: 62.0
+      wind_speed_kmh: 15.0
+      visibility_km: 9.0
+
+    - name: LIGHT_RAIN
+      start_lap: 26
+      end_lap: 34
+      rain_intensity: 0.25
+      air_temperature_c: 25.0
+      track_temperature_c: 31.0
+      humidity_pct: 76.0
+      wind_speed_kmh: 18.0
+      visibility_km: 7.0
+
+    - name: RAIN
+      start_lap: 35
+      end_lap: 42
+      rain_intensity: 0.55
+      air_temperature_c: 23.0
+      track_temperature_c: 27.0
+      humidity_pct: 86.0
+      wind_speed_kmh: 22.0
+      visibility_km: 5.0
+
+    - name: HEAVY_RAIN
+      start_lap: 43
+      end_lap: 48
+      rain_intensity: 0.85
+      air_temperature_c: 21.0
+      track_temperature_c: 24.0
+      humidity_pct: 94.0
+      wind_speed_kmh: 28.0
+      visibility_km: 2.5
+
+    - name: DRYING_TRACK
+      start_lap: 49
+      end_lap: 58
+      rain_intensity: 0.00
+      air_temperature_c: 24.0
+      track_temperature_c: 30.0
+      humidity_pct: 72.0
+      wind_speed_kmh: 20.0
+      visibility_km: 8.0
+
+  physics:
+    wetness_rain_gain: 0.20
+    wetness_drying_rate: 0.08
+    minimum_drying_grip: 0.55
+    maximum_wetness: 1.0
+    grip_loss_factor: 0.50

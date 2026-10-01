@@ -1,19 +1,12 @@
-"""
+﻿"""
 Declarative event schemas - Navroop's ownership (engine/validation/).
 
-One place that says what a valid event looks like on every topic. The
-race.* schemas mirror the DRAFT sections of docs/event-contract.md; the
-business.* schemas mirror the sections added with the fan/sponsor
-producers. If a contract changes, change it here in the same PR.
-
-Design notes:
-  - Extra (unknown) fields are tolerated so producers can add fields
-    without instantly sending everything to the DLQ.
-  - Ranges are only enforced where the contract states one (or where the
-    value is physically impossible, e.g. a negative count).
-  - Each topic can also have cross-field rules (see CROSS_FIELD_RULES).
+One place that says what a valid event looks like on every topic.
 """
+
 from dataclasses import dataclass
+
+from engine.config.car_loader import get_known_car_ids
 
 
 @dataclass(frozen=True)
@@ -22,17 +15,14 @@ class Field:
     min: float | None = None
     max: float | None = None
     choices: frozenset | None = None
-    entity: str | None = None  # key into KNOWN_ENTITIES ("car", "sponsor")
+    entity: str | None = None
 
 
-# Known entities. A car_id/sponsor_id outside these sets is an "unknown
-# entity" and the event goes to the DLQ. tests/unit/test_validator.py
-# checks the car set against RaceState.create_default() so it cannot
-# silently drift from the simulator.
 KNOWN_ENTITIES: dict[str, set[str]] = {
-    "car": {"CAR_01", "CAR_02", "CAR_03"},
-    "sponsor": {"SPONSOR_01", "SPONSOR_02", "SPONSOR_03"},
+    "car": get_known_car_ids(),
+    "sponsor": {f"SPONSOR_{i:02d}" for i in range(1, 13)},
 }
+
 
 _UNIT = dict(min=0.0, max=1.0)
 
@@ -42,6 +32,7 @@ _COMMON = {
     "car_id": Field("str", entity="car"),
     "lap_number": Field("int", min=0),
 }
+
 
 SCHEMAS: dict[str, dict[str, Field]] = {
     "race.timing": {
@@ -117,20 +108,24 @@ SCHEMAS: dict[str, dict[str, Field]] = {
 
 
 def _sponsor_funnel(event: dict) -> list[str]:
-    """clicks cannot exceed impressions; conversions cannot exceed clicks."""
+    """Clicks cannot exceed impressions; conversions cannot exceed clicks."""
     errors = []
+
     if event["clicks"] > event["impressions"]:
         errors.append(
-            f"inconsistent funnel: clicks ({event['clicks']}) > impressions ({event['impressions']})"
+            f"inconsistent funnel: clicks ({event['clicks']}) "
+            f"> impressions ({event['impressions']})"
         )
+
     if event["conversions"] > event["clicks"]:
         errors.append(
-            f"inconsistent funnel: conversions ({event['conversions']}) > clicks ({event['clicks']})"
+            f"inconsistent funnel: conversions ({event['conversions']}) "
+            f"> clicks ({event['clicks']})"
         )
+
     return errors
 
 
-# Run only when every individual field already passed its own checks.
 CROSS_FIELD_RULES = {
     "business.sponsors": [_sponsor_funnel],
 }

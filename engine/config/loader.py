@@ -18,7 +18,12 @@ _lock = threading.Lock()
 _current_config: dict = {}
 _last_good_version = 0
 
-REQUIRED_TOP_LEVEL_KEYS = {"lap_pace_delta", "gap_trend", "stale_stream_detection"}
+REQUIRED_TOP_LEVEL_KEYS = {
+    "lap_pace_delta",
+    "gap_trend",
+    "stale_stream_detection",
+    "commercial",
+}
 
 def _validate(raw: dict) -> list[str]:
     errors = []
@@ -34,6 +39,17 @@ def _validate(raw: dict) -> list[str]:
     gt = raw["gap_trend"]
     if gt["severity_thresholds"]["widening_warning_ms_per_lap"] >= gt["severity_thresholds"]["widening_critical_ms_per_lap"]:
         errors.append("gap_trend: widening_warning_ms_per_lap must be less than widening_critical_ms_per_lap")
+
+    commercial = raw["commercial"]
+    for kpi_id in ("COM-001", "COM-003"):
+        if kpi_id not in commercial:
+            errors.append(f"commercial: missing {kpi_id}")
+            continue
+        block = commercial[kpi_id]
+        if block["warning"] >= block["critical"]:
+            errors.append(f"commercial {kpi_id}: warning must be less than critical")
+        if block["warning"] < 0 or block["critical"] < 0:
+            errors.append(f"commercial {kpi_id}: thresholds must be non-negative")
 
     return errors
 
