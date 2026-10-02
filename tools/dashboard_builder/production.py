@@ -734,24 +734,43 @@ ORDER BY failed_at DESC LIMIT 30
 
 CURRENT_PACE_RANKING = q(f"""
 {RACE}
-,ranked AS (
-    SELECT k.car_id,
-           k.lap_time_ms,
-           MIN(k.lap_time_ms) OVER (PARTITION BY k.car_id) AS best_lap_ms,
-           ROW_NUMBER() OVER (
-               PARTITION BY k.car_id
-               ORDER BY k.event_time DESC, k.id DESC
-           ) AS rn
-    FROM kpi_results k CROSS JOIN race
+,valid AS (
+    SELECT k.*
+    FROM kpi_results k
+    CROSS JOIN race
     WHERE k.event_time BETWEEN race.race_start AND race.race_end
       AND k.lap_number BETWEEN 1 AND 60
+      AND k.lap_time_ms > 0
       AND k.car_id REGEXP '{CAR_RE}'
-      AND k.car_id REGEXP '${car:regex}'
+      AND k.car_id REGEXP '${{car:regex}}'
+),
+ranked AS (
+    SELECT
+        car_id,
+        lap_number,
+        lap_time_ms,
+        event_time,
+        id,
+        AVG(lap_time_ms) OVER (
+            PARTITION BY car_id
+            ORDER BY lap_number
+            ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING
+        ) AS previous_3_lap_avg_ms,
+        ROW_NUMBER() OVER (
+            PARTITION BY car_id
+            ORDER BY event_time DESC, id DESC
+        ) AS rn
+    FROM valid
 )
-SELECT car_id AS car,
-       ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
+SELECT
+    car_id AS car,
+    ROUND(
+        (lap_time_ms - previous_3_lap_avg_ms) / 1000.0,
+        2
+    ) AS pace_delta_s
 FROM ranked
-WHERE rn=1
+WHERE rn = 1
+  AND previous_3_lap_avg_ms IS NOT NULL
 ORDER BY pace_delta_s DESC
 """)
 
@@ -773,6 +792,7 @@ def build_executive():
         table("12-Car Executive Status", CURRENT_CAR_STATUS, 0, 25, 24, 9),
         table("Executive Alert Feed", ALERT_FEED, 0, 34, 12, 8),
         table("Strategy Decision Feed", STRATEGY_FEED, 12, 34, 12, 8),
+        bar("Current Pace Delta // 12-Car Ranking", CURRENT_PACE_RANKING, 0, 42, 12, 8, "suffix:s", 2),
     ]
     return dashboard("racepulse-ceo-command-center", "RACEPULSE // CEO Command Center",
                       "Executive command center for live race, strategy, commercial and risk intelligence.", panels)
@@ -816,7 +836,6 @@ def build_strategy():
         ts("Pit-Window Signal", PIT_WINDOW, 12, 8, 12, 8, "short", 2),
         table("12-Car Strategy Matrix", STRATEGY_MATRIX, 0, 16, 24, 9),
         table("Strategy Decision Feed", STRATEGY_FEED, 0, 25, 12, 9),
-        bar("Current Pace Delta // 12-Car Ranking", CURRENT_PACE_RANKING, 0, 42, 12, 8, "suffix:s", 2),
         table("Current Race Performance Context", CURRENT_CAR_STATUS, 12, 25, 12, 9),
     ]
     return dashboard("racepulse-strategy", "RACEPULSE // Strategy Intelligence",
@@ -919,5 +938,9 @@ if __name__ == "__main__":
     print("=" * 70)
     print("All production dashboards generated.")
     print("=" * 70)
+
+
+
+
 
 
