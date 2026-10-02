@@ -1,534 +1,485 @@
 # 🏎️ RACEPULSE
 
-### Real-Time Motorsport Event Intelligence & Race Operations Platform
+## Real-Time Motorsport Event Intelligence & Race Operations Platform
 
-> **Sense → Stream → Analyze → Alert → Decide**
+> **SENSE → STREAM → ANALYZE → ALERT → DECIDE**
 
-RACEPULSE is a real-time streaming analytics platform designed to transform multiple racing-event data streams into operational, strategic, safety, and commercial intelligence.
+RACEPULSE is a production-style real-time streaming analytics platform built for motorsport/race-event intelligence. It converts multiple race and business event streams into configurable KPIs, risk signals, alerts, and decision-oriented Grafana dashboards.
 
-Instead of functioning as a conventional race scoreboard, RACEPULSE correlates telemetry, timing, tyre, weather, pit-stop, incident, fan-engagement, and sponsorship streams to identify meaningful changes and surface actionable signals through real-time dashboards and alerts.
+The project demonstrates an end-to-end streaming architecture using **Apache Kafka, Python, MySQL, Grafana, Docker, YAML-based configuration, and automated testing**.
 
 ---
 
-## 🚀 What is RACEPULSE?
+## 1. Executive Overview
 
-Modern motorsport generates multiple high-frequency data streams simultaneously:
+Modern motorsport produces many streams simultaneously:
 
-* Vehicle telemetry
-* Lap timing
-* Tyre condition
-* Weather and track conditions
-* Pit-stop activity
-* Race-control incidents
-* Fan engagement
-* Sponsorship exposure
-* Streaming-system health
+- Vehicle telemetry
+- Lap timing
+- Tyre condition
+- Weather and track conditions
+- Pit-stop activity
+- Race-control incidents
+- Fan engagement
+- Sponsorship activity
+- Streaming-system health
 
-Looking at these streams independently makes it difficult to understand **what changed, why it changed, and what needs attention**.
+The challenge is not only collecting these events. The challenge is transforming them into **timely, correlated, and actionable intelligence**.
 
-RACEPULSE creates a streaming intelligence layer between raw event streams and decision-makers.
+RACEPULSE creates an event-driven intelligence layer between raw events and decision-makers.
 
 ```text
-                  RACEPULSE
-                      │
-       ┌──────────────┼──────────────┐
-       │              │              │
-     SENSE          STREAM         ANALYZE
-       │              │              │
-       └──────────────┼──────────────┘
-                      ↓
-                  ALERT
-                      ↓
-                  DECIDE
+RAW EVENTS
+    ↓
+VALIDATION
+    ↓
+KAFKA STREAMING
+    ↓
+CONSUMERS
+    ↓
+WINDOWING + KPI ENGINE
+    ↓
+RULES + THRESHOLDS
+    ↓
+ALERTS
+    ↓
+MYSQL
+    ↓
+GRAFANA
+    ↓
+DECISION SUPPORT
 ```
 
-The platform continuously transforms raw events into:
-
-* KPIs
-* Trends
-* Risk signals
-* Alerts
-* Operational insights
-* Strategic indicators
-* Commercial insights
-* Streaming-health metrics
-
 ---
 
-# 🎯 Problem Statement
+# 2. Problem Statement
 
-A modern race environment contains large volumes of rapidly changing information.
+Race teams and event operators deal with rapidly changing information across multiple domains.
 
-A single event can simultaneously involve:
+A meaningful performance change may involve several related events:
 
 ```text
-Telemetry change
-      ↓
 Tyre degradation
+      ↓
+Grip reduction
       ↓
 Lap-time deterioration
       ↓
-Position/gap change
+Gap change
       ↓
-Potential strategy implication
-```
-
-At the same time:
-
-```text
-Rain
- ↓
-Track wetness
- ↓
-Grip reduction
- ↓
-Vehicle performance change
- ↓
-Tyre behavior
- ↓
-Pit-window relevance
-```
-
-The challenge is not simply collecting the data.
-
-The challenge is **connecting related events quickly enough to create useful intelligence**.
-
-RACEPULSE addresses this using an event-driven streaming architecture.
-
----
-
-# 🧠 Core Concept
-
-RACEPULSE follows the pipeline:
-
-```text
-SOURCE
-   ↓
-EVENT GENERATION
-   ↓
-SCHEMA VALIDATION
-   ↓
-KAFKA STREAMING
-   ↓
-WINDOWING & AGGREGATION
-   ↓
-KPI ENGINE
-   ↓
-RULE EVALUATION
-   ↓
-ALERT GENERATION
-   ↓
-MYSQL ANALYTICS
-   ↓
-GRAFANA
-```
-
-The platform is designed around one central question:
-
-> **What happened, why does it matter, what is affected, and what should the user investigate next?**
-
----
-
-# 🏗️ System Architecture
-
-```text
-                         ┌──────────────────────┐
-                         │   Race Simulation    │
-                         │   & Event Producers  │
-                         └──────────┬───────────┘
-                                    │
-             ┌──────────────────────┼──────────────────────┐
-             │                      │                      │
-             ▼                      ▼                      ▼
-       Race Streams           Business Streams       System Events
-             │                      │                      │
-             └──────────────────────┼──────────────────────┘
-                                    ▼
-                         ┌──────────────────────┐
-                         │   Kafka + ZooKeeper  │
-                         └──────────┬───────────┘
-                                    │
-                    ┌───────────────┼────────────────┐
-                    │               │                │
-                    ▼               ▼                ▼
-             Performance        Strategy        Race Control
-              Consumer          Consumer          Consumer
-                    │               │                │
-                    └───────────────┼────────────────┘
-                                    ▼
-                         ┌──────────────────────┐
-                         │   Analytics Engine   │
-                         │                      │
-                         │ Validation           │
-                         │ Windowing            │
-                         │ Formula Engine       │
-                         │ Rule Engine           │
-                         │ Alert Engine          │
-                         │ Configuration        │
-                         └──────────┬───────────┘
-                                    │
-                       ┌────────────┴────────────┐
-                       ▼                         ▼
-                KPI / Analytics              Alerts
-                       │                         │
-                       ▼                         ▼
-                  ┌────────┐              ┌────────────┐
-                  │ MySQL  │              │   Kafka    │
-                  └────┬───┘              │ Alert Topic│
-                       │                  └────────────┘
-                       ▼
-                  ┌─────────┐
-                  │ Grafana │
-                  └─────────┘
-```
-
----
-
-# 🔄 Event-Driven Architecture
-
-RACEPULSE uses Kafka as the central event backbone.
-
-Core race streams include:
-
-| Kafka Topic         | Purpose                           |
-| ------------------- | --------------------------------- |
-| `race.timing`       | Lap timing, position and gaps     |
-| `race.telemetry`    | Vehicle telemetry                 |
-| `race.tyres`        | Tyre condition and degradation    |
-| `race.weather`      | Weather and track conditions      |
-| `race.pitstops`     | Pit activity                      |
-| `race.incidents`    | Race-control events               |
-| `business.fans`     | Fan engagement                    |
-| `business.sponsors` | Sponsorship activity              |
-| `analytics.alerts`  | Generated alerts                  |
-| `system.dlq`        | Invalid or rejected events        |
-| `system.audit`      | Configuration/system audit events |
-
-Events are keyed by the relevant entity, primarily `car_id`, to preserve ordering for each vehicle.
-
----
-
-# 🏎️ Stateful Race Simulation
-
-RACEPULSE does not rely on completely independent random records.
-
-The simulator maintains state for:
-
-* Race
-* Car
-* Driver
-* Tyres
-* Weather
-* Track
-* Telemetry
-* Pit stops
-* Incidents
-
-This allows events to be causally related.
-
-For example:
-
-```text
-RAIN
-  ↓
-Track Wetness ↑
-  ↓
-Grip ↓
-  ↓
-Vehicle Performance ↓
-  ↓
-Lap Time ↑
-  ↓
-Tyre Behaviour Changes
-  ↓
-Strategy Risk ↑
+Strategy relevance
 ```
 
 Similarly:
 
 ```text
-Mechanical Failure
-        ↓
-Incident Event
-        ↓
-Car Retires
-        ↓
-Timing Events Stop
-        ↓
-Race Control Updates State
-        ↓
-Stale-Stream Monitor
-understands retirement
+Weather change
+      ↓
+Track wetness
+      ↓
+Grip change
+      ↓
+Vehicle performance change
+      ↓
+Tyre behaviour
+      ↓
+Strategy / race-control signal
 ```
 
-This creates meaningful sequences for downstream streaming analytics.
+Traditional dashboards often display these streams independently.
+
+RACEPULSE is designed to connect them through a streaming analytics layer so that users can investigate **what changed, where it changed, and which analytical signal was generated**.
 
 ---
 
-# 🎬 Race Scenarios
+# 3. Core Architecture
 
-The simulator supports controlled scenarios for testing and demonstrations.
-
-### Normal Race
-
-Baseline racing conditions with normal performance progression.
-
-### 🌧️ Rain
-
-Simulates changing weather and track conditions.
+RACEPULSE follows the architecture:
 
 ```text
-Rain
- ↓
-Wetness
- ↓
-Grip
- ↓
-Performance
- ↓
-Lap Time
+                    RACEPULSE
+                        │
+                        ▼
+                     SENSE
+                        │
+                        ▼
+                    STREAM
+                        │
+                        ▼
+                    ANALYZE
+                        │
+                        ▼
+                     ALERT
+                        │
+                        ▼
+                     DECIDE
 ```
 
-### 🛞 Tyre Crisis
-
-Introduces accelerated tyre degradation and grip loss.
-
-### 🚨 Safety Car
-
-Changes race gaps and race-control state.
-
-### 🔧 Mechanical Failure
-
-A vehicle experiences a mechanical failure and retires from the race.
-
-### ⚔️ Close Battle
-
-Creates a small gap between cars to generate meaningful timing and strategy signals.
-
-### 🏁 Pit Stop
-
-Introduces pit-entry, tyre-change, repair and pit-exit events.
-
-### 📈 Commercial Surge
-
-Creates increased fan engagement and sponsorship activity.
-
-### 💥 Data Failure
-
-Simulates missing or unhealthy data streams.
-
-### ⚙️ Configuration Failure
-
-Tests invalid KPI configuration and failure-closed behavior.
-
----
-
-# 📊 Analytics Engine
-
-The analytics layer is divided into reusable components.
+Detailed flow:
 
 ```text
-engine/
-├── validation/
-├── formulas/
-├── windows/
-├── rules/
-├── alerts/
-└── config/
+┌─────────────────────────────────────────────────────────────┐
+│                    EVENT GENERATION                          │
+│                                                             │
+│ Timing | Telemetry | Tyres | Weather | Pit Stops | Incidents│
+│ Fans   | Sponsors                                      │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │ Kafka + ZooKeeper│
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        Performance      Strategy      Race Control
+         Consumer        Consumer        Consumer
+              │              │              │
+              └──────────────┼──────────────┘
+                             ▼
+                    ┌──────────────────┐
+                    │ Analytics Engine │
+                    │                  │
+                    │ Validation       │
+                    │ Windowing        │
+                    │ Formulas         │
+                    │ Rules            │
+                    │ Alerts           │
+                    └────────┬─────────┘
+                             │
+                    ┌────────┴────────┐
+                    ▼                 ▼
+                 MySQL             Alerts
+                    │                 │
+                    └────────┬────────┘
+                             ▼
+                         Grafana
 ```
-
-## Validation
-
-Validates incoming events before processing.
-
-Invalid events are routed to the DLQ rather than silently discarded.
 
 ---
 
-## Windowing
+# 4. Technology Stack
 
-RACEPULSE supports configurable time windows for streaming calculations.
+| Technology | Purpose |
+|---|---|
+| Python | Producers, simulator, consumers and analytics |
+| Apache Kafka | Real-time event streaming |
+| Apache ZooKeeper | Kafka coordination |
+| MySQL | Analytical persistence |
+| Grafana | Real-time visualization |
+| Docker / Docker Compose | Infrastructure orchestration |
+| Pytest | Automated testing |
+| YAML | Formula, threshold, parameter and window configuration |
+| Git / GitHub | Version control and collaboration |
+
+---
+
+# 5. Kafka Event Architecture
+
+The system uses domain-oriented Kafka topics.
+
+| Topic | Purpose |
+|---|---|
+| `race.timing` | Lap timing, position and gap data |
+| `race.telemetry` | Vehicle telemetry |
+| `race.tyres` | Tyre condition and degradation |
+| `race.weather` | Weather and track conditions |
+| `race.pitstops` | Pit-stop events |
+| `race.incidents` | Race-control incidents |
+| `business.fans` | Fan engagement |
+| `business.sponsors` | Sponsorship activity |
+| `analytics.alerts` | Generated analytical alerts |
+| `system.dlq` | Invalid/rejected events |
+
+The platform also uses internal/system monitoring streams and persisted health information where applicable.
+
+---
+
+# 6. Stateful Race Simulation
+
+RACEPULSE uses a stateful race simulator rather than generating completely independent random records.
+
+The simulator maintains race-related state across:
+
+- Cars
+- Race laps
+- Timing
+- Telemetry
+- Tyres
+- Weather
+- Pit stops
+- Incidents
+- Fan activity
+- Sponsorship activity
+
+This allows downstream consumers to observe related events instead of isolated random values.
 
 Example:
 
 ```text
-15-second tumbling window
-```
-
-Window configuration is externalized so the analytics logic does not need to be rewritten when parameters change.
-
----
-
-## Formula Engine
-
-KPIs are implemented as reusable, configurable analytical formulas.
-
-Example:
-
-```text
-Input Events
-     ↓
-Window
-     ↓
-Formula
-     ↓
-KPI Result
+RAIN
+ ↓
+TRACK WETNESS
+ ↓
+GRIP CHANGE
+ ↓
+VEHICLE PERFORMANCE
+ ↓
+LAP-TIME CHANGE
+ ↓
+TYRE / STRATEGY SIGNAL
 ```
 
 ---
 
-## Rule Engine
+# 7. Supported Race Scenarios
 
-The rule engine evaluates KPI results against configured thresholds.
+The simulator supports controlled scenarios for testing and demonstration.
+
+| Scenario | Purpose |
+|---|---|
+| `NORMAL_RACE` | Baseline race behaviour |
+| `RAIN` | Changing weather and track conditions |
+| `TYRE_CRISIS` | Accelerated tyre degradation |
+| `SAFETY_CAR` | Race-control and gap changes |
+| `CLOSE_BATTLE` | Tight racing gaps |
+| `MECHANICAL_FAILURE` | Vehicle failure and retirement |
+| `PIT_STOP` | Pit-stop activity |
+| `COMMERCIAL_SURGE` | Increased fan/sponsor activity |
+| `DATA_FAILURE` | Missing/unhealthy data streams |
+| `CONFIGURATION_FAILURE` | Invalid configuration handling |
+
+---
+
+# 8. Validation & Data Quality
+
+Every event passes through a centralized validation layer before analytical processing.
+
+Validation covers:
+
+- JSON parsing
+- Object/type validation
+- Required fields
+- Data types
+- Value ranges
+- UUID/event identifiers
+- Timestamps
+- Known cars/entities
+- Business-rule constraints
+- Duplicate event IDs
+
+Invalid events are routed to:
 
 ```text
-KPI Result
+system.dlq
+```
+
+rather than being silently processed.
+
+### Extra fields
+
+Additional fields can be tolerated where the event contract permits them.
+
+### Duplicate events
+
+Duplicate `event_id` values are detected and prevented from creating duplicate analytical processing.
+
+### Failure-closed configuration
+
+Invalid formulas/configuration are rejected while the last valid configuration remains available.
+
+---
+
+# 9. Analytics Architecture
+
+The analytical layer separates:
+
+```text
+VALIDATION
     ↓
+WINDOWING
+    ↓
+FORMULAS
+    ↓
+RULES
+    ↓
+ALERTS
+```
+
+This separation allows the system to distinguish between:
+
+- What should be calculated?
+- Over what window?
+- When is the result abnormal?
+- How severe is the abnormality?
+
+---
+
+# 10. Configurable Analytics
+
+Important analytical logic is externalized into configuration.
+
+```text
+config/
+├── formulas.yaml
+├── parameters.yaml
+├── thresholds.yaml
+├── windows.yaml
+└── schemas/
+```
+
+Examples of configurable elements:
+
+- KPI formulas
+- Formula weights
+- Warning thresholds
+- Critical thresholds
+- Window durations
+- Allowed lateness
+- Scenario parameters
+
+This supports live demonstration of configuration changes without rewriting the consumer architecture.
+
+The project follows a **last-known-good configuration** principle: invalid configuration should not silently replace a valid configuration.
+
+---
+
+# 11. Windowed Streaming Analytics
+
+The primary analytical model uses configurable time windows.
+
+The project includes:
+
+```text
+Short Window   → 5 sec
+Default Window → 15 sec
+Medium Window  → 30 sec
+Long Window    → 60 sec
+```
+
+The default streaming assignment requirement of a **15-second tumbling window** is implemented through the configuration layer.
+
+Windowed calculations are persisted for dashboard consumption.
+
+---
+
+# 12. Core Analytical Domains
+
+## Performance Intelligence
+
+Focuses on:
+
+- Lap pace
+- Pace deterioration
+- Gap trends
+- Average speed
+- Vehicle performance
+
+### Pace Delta
+
+Measures current lap performance relative to a reference/best lap.
+
+---
+
+## Strategy Intelligence
+
+Combines contextual signals from:
+
+- Timing
+- Tyres
+- Weather
+- Pit stops
+
+Key signals include:
+
+- Tyre degradation risk
+- Grip loss
+- Pace deterioration
+- Pit-window signal
+
+Example strategy model:
+
+```text
+Tyre Degradation
+       +
+Grip Loss
+       +
+Relative Pace Degradation
+       +
+Track Wetness
+       ↓
+Strategy Risk
+```
+
+---
+
+## Race Control Intelligence
+
+Focuses on:
+
+- Track risk
+- Vehicle risk
+- Incidents
+- Operational conditions
+- Stale-stream signals
+
+Vehicle retirement is treated differently from an unexplained data-stream failure so that legitimate race events are not automatically interpreted as infrastructure failures.
+
+---
+
+## Commercial Intelligence
+
+Uses business streams for:
+
+- Fan engagement
+- Sponsor visibility
+- Sponsor conversion
+- Commercial surge analysis
+
+---
+
+# 13. Alert Engine
+
+RACEPULSE converts analytical results into structured alerts.
+
+The general flow is:
+
+```text
+Event
+ ↓
+Validation
+ ↓
+KPI
+ ↓
 Threshold Evaluation
-    ↓
+ ↓
 Severity
-    ↓
+ ↓
 Alert
+ ↓
+MySQL / Grafana
 ```
 
-This separates:
-
-* **What is the KPI?**
-* **When should it trigger?**
-* **How severe is the signal?**
-
----
-
-# 📈 Core KPIs
-
-## 1. Lap Pace Delta
-
-Measures a car's current lap pace relative to its best/reference lap.
-
-Useful for identifying:
-
-* Pace deterioration
-* Performance changes
-* Significant lap-time deviations
-
----
-
-## 2. Gap Trend
-
-Tracks the evolution of a car's gap to the leader over a rolling window.
-
-The implementation uses asymmetric alerting:
-
-> A widening gap is treated as a meaningful deterioration signal.
-
----
-
-## 3. Tyre Degradation Rate
-
-Measures the rate at which tyre performance deteriorates over time.
-
-Inputs can include:
-
-* Tyre age
-* Grip
-* Wear
-* Pace change
-
----
-
-## 4. Pit Stop Efficiency
-
-Evaluates pit-stop execution using:
-
-* Pit duration
-* Pit activity
-* Tyre change
-* Repair activity
-
----
-
-## 5. Average Speed
-
-Aggregates telemetry to identify vehicle speed trends.
-
----
-
-## 6. Track Risk
-
-Combines track conditions and race-control signals to identify elevated operational risk.
-
----
-
-## 7. Incident Rate
-
-Measures incident frequency over configurable time windows.
-
----
-
-## 8. Fan Engagement Rate
-
-Measures engagement activity across the simulated fan stream.
-
----
-
-## 9. Sponsor Exposure
-
-Tracks simulated sponsorship exposure and engagement.
-
----
-
-## 10. End-to-End Streaming Latency
-
-Measures the time between event generation and analytical visibility.
+Severity levels include:
 
 ```text
-event_time
-    ↓
-Kafka
-    ↓
-Consumer
-    ↓
-Processing
-    ↓
-MySQL
-    ↓
-Grafana
+CRITICAL
+WARNING
+NONE
 ```
 
----
+Alerts can contain:
 
-# 🚨 Alerting
+- KPI identifier
+- Signal
+- Severity
+- Affected car/entity
+- Value
+- Event timestamp
+- Event identifier
+- Context
 
-RACEPULSE generates structured alerts rather than simply displaying raw threshold violations.
-
-An alert contains:
-
-```text
-Signal
-Severity
-Affected Entity
-Timestamp
-Evidence
-Cause / Context
-Suggested Investigation
-```
-
-Example:
-
-```text
-HIGH — TYRE RISK
-
-Car: CAR_07
-Tyre Age: 17 laps
-Grip: 0.71
-Pace Delta: +0.84 sec
-Degradation: 0.81
-
-Suggested Investigation:
-Review current pit-window conditions.
-```
-
-Alerts are published to:
+Alerts are published through:
 
 ```text
 analytics.alerts
@@ -538,486 +489,415 @@ and persisted in MySQL.
 
 ---
 
-# 🛡️ Reliability & Failure Handling
+# 14. Reliability Engineering
 
-Production-style streaming systems must handle failure explicitly.
+RACEPULSE was designed with production-style failure handling.
 
-RACEPULSE follows a **failure-closed** philosophy.
-
-## Invalid JSON
+## Malformed JSON
 
 ```text
-Invalid Event
-     ↓
+Malformed Event
+      ↓
 Validation Failure
-     ↓
+      ↓
 DLQ
 ```
 
-## Invalid Formula
+The consumer remains operational.
+
+## Invalid Schema
 
 ```text
-Invalid Formula
-     ↓
-Reject New Formula
-     ↓
-Retain Last Valid Formula
+Schema Failure
+      ↓
+DLQ
+      ↓
+No downstream analytical corruption
 ```
 
 ## Duplicate Event
 
 ```text
 Duplicate event_id
-     ↓
-Idempotency Check
-     ↓
-No duplicate analytical result
+      ↓
+Deduplication
+      ↓
+Event dropped/count tracked
 ```
 
-## Missing Stream
-
-Missing data is represented as:
+## Invalid Formula
 
 ```text
-NO DATA
+Invalid Formula
+      ↓
+Reject
+      ↓
+Retain Last Valid Formula
 ```
 
-rather than incorrectly treating it as:
+## Stale Stream
+
+```text
+No new events
+      ↓
+Stale-stream detection
+      ↓
+SYS-STALE alert
+```
+
+## Zero vs No Data
+
+The dashboard and analytical layer distinguish between:
 
 ```text
 0
 ```
 
-## Producer Failure
+and:
 
 ```text
-Producer stops
-      ↓
-No new events
-      ↓
-Stale-stream detection
-      ↓
-Alert
+NO DATA
 ```
 
-Legitimate vehicle retirement is handled separately so a retired car is not incorrectly treated as a failed stream.
+This prevents missing streams from being misrepresented as healthy zero values.
 
-## Kafka / Consumer Issues
+## Idempotency
 
-The platform is designed to expose:
-
-* Consumer health
-* Processing latency
-* Consumer lag
-* Error counts
-* DLQ activity
-
-for operational monitoring.
+Replay or repeated processing should not create duplicate analytical records where the persistence contract defines uniqueness.
 
 ---
 
-# 🗄️ Database Layer
+# 15. Database Layer
 
-MySQL stores analytical rather than raw high-frequency telemetry data.
+MySQL stores analytical results used by downstream dashboards.
 
-Core analytical tables include:
+Important persisted domains include:
 
 ```text
 kpi_results
 gap_trend_results
+windowed_kpi_results
+strategy_results
+race_control_results
+commercial_results
 alerts
-schema_migrations
+stream_health
+infra_alerts
+dlq_events
 ```
 
-The database layer supports:
+The database is accessed by the consumers and Grafana dashboards.
 
-* Idempotent writes
-* Versioned migrations
-* Analytical queries
-* Grafana integration
+Database migrations are versioned and applied through the project's migration structure.
 
-Example idempotency pattern:
+---
+
+# 16. Grafana Dashboard Suite
+
+The final RACEPULSE dashboard layer contains **six production dashboards** with a total of **91 panels**.
+
+| Dashboard | Panels | Main Question |
+|---|---:|---|
+| CEO Command Center | 16 | What is the overall race/business picture? |
+| Race Operations | 17 | What is happening on track? |
+| Strategy Intelligence | 14 | What strategic signals require attention? |
+| Race Control | 14 | What safety/operational risks exist? |
+| Commercial Intelligence | 16 | What is happening with fans and sponsors? |
+| Streaming Engineering | 14 | Is the streaming platform healthy? |
+
+---
+
+## 16.1 CEO Command Center
+
+Executive-level view containing:
+
+- Race progress
+- Current performance
+- Pace delta
+- Race alerts
+- Risk signals
+- Commercial indicators
+- Current-lap ranking
+- Pace distribution
+- Platform-level signals
+
+The dashboard is intended for rapid executive situational awareness.
+
+---
+
+## 16.2 Race Operations
+
+Operational race view containing:
+
+- Current speed ranking
+- Gap to leader
+- Lap progression
+- Timing information
+- Performance signals
+- Alert severity
+- Operational feeds
+
+---
+
+## 16.3 Strategy Intelligence
+
+Focused on strategic decision support:
+
+- Tyre risk
+- Tyre degradation
+- Grip
+- Pace deterioration
+- Strategy signals
+- Pit-window indicators
+- Vehicle-risk states
+
+---
+
+## 16.4 Race Control
+
+Focused on:
+
+- Track risk
+- Vehicle risk
+- Incidents
+- Alert severity
+- Operational alert feeds
+- Risk-state distributions
+
+---
+
+## 16.5 Commercial Intelligence
+
+Focused on:
+
+- Fan engagement
+- Sponsor visibility
+- Sponsor conversion
+- Commercial activity
+- Engagement trends
+- Commercial alert signals
+
+---
+
+## 16.6 Streaming Engineering
+
+Focused on the health of the analytics platform:
+
+- Infrastructure alert feed
+- Data quality / DLQ feed
+- Alert severity mix
+- Alert signal mix
+- Streaming health indicators
+- Platform-level monitoring
+
+An empty operational table is not fabricated into a false zero. Where no persisted data exists, the dashboard intentionally shows **No Data**.
+
+---
+
+# 17. Dashboard Design Principles
+
+The final dashboards use a production-oriented dark technical interface.
+
+Design principles include:
+
+- Decision-oriented panels
+- Consistent typography
+- Compact information density
+- 12-car filtering
+- Severity filtering
+- Configurable time range
+- Real-time refresh
+- Semantic alert colors
+- Appropriate units
+- Threshold-aware visualization
+- Clear NO DATA states
+
+Dashboard variables include:
 
 ```text
-(event_id, kpi_id)
+Car
+Severity
+```
+
+The dashboard layer also includes semantic visualizations such as:
+
+- Current pace ranking
+- Current speed ranking
+- Gap-to-leader ranking
+- Tyre-risk ranking
+- Vehicle-risk state distribution
+- Alert severity mix
+- Alert signal mix
+- Lap-time distribution
+- Sponsor visibility
+- Sponsor conversion
+
+---
+
+# 18. Demo Architecture
+
+A typical demonstration follows:
+
+```text
+START INFRASTRUCTURE
         ↓
-UNIQUE KEY
+START RACE SIMULATOR
         ↓
-ON DUPLICATE KEY UPDATE
+EVENTS ENTER KAFKA
+        ↓
+CONSUMERS PROCESS EVENTS
+        ↓
+KPIs GENERATED
+        ↓
+ALERTS GENERATED
+        ↓
+RESULTS STORED IN MYSQL
+        ↓
+GRAFANA UPDATES
 ```
 
-This allows events to be replayed without creating duplicate KPI records.
-
----
-
-# 📊 Grafana Dashboards
-
-RACEPULSE is designed around multiple decision-oriented dashboards rather than one overloaded dashboard.
-
-## 1. Executive / CEO Command Center
-
-Answers:
-
-> **How is the race performing overall?**
-
-Key signals:
-
-* Race progress
-* Current leader
-* Pace
-* Risk
-* Strategy alerts
-* Incidents
-* Fan engagement
-* Sponsor exposure
-* Streaming health
-
----
-
-## 2. Race Operations Dashboard
-
-Answers:
-
-> **What is happening on track right now?**
-
-Includes:
-
-* Live positions
-* Lap progression
-* Gaps
-* Lap pace
-* Sector performance
-* Flags
-* Incidents
-* Safety-car status
-
----
-
-## 3. Strategy Dashboard
-
-Answers:
-
-> **What strategic signals require investigation?**
-
-Includes:
-
-* Tyre age
-* Tyre degradation
-* Grip
-* Weather
-* Pit stops
-* Pit duration
-* Pit-window indicators
-* Strategy risk
-
----
-
-## 4. Commercial Dashboard
-
-Answers:
-
-> **What is happening with audience and sponsorship activity?**
-
-Includes:
-
-* Viewership
-* Fan engagement
-* Social activity
-* Sponsor impressions
-* Exposure
-* Commercial activity
-
----
-
-## 5. Streaming Engineering Dashboard
-
-Answers:
-
-> **Is the RACEPULSE platform itself healthy?**
-
-Includes:
-
-* Events/sec
-* Consumer lag
-* Processing latency
-* Database writes
-* Errors
-* DLQ count
-* Producer health
-* Consumer health
-
----
-
-# 🔁 Live Scenario Demonstration
-
-One of the strongest RACEPULSE demonstrations is a weather event.
-
-For example:
+The strongest demonstrations use controlled scenarios such as:
 
 ```text
-NORMAL RACE
-     ↓
-RAIN EVENT
-     ↓
-Weather Stream
-     ↓
-Track Wetness
-     ↓
-Grip Reduction
-     ↓
-Vehicle Performance
-     ↓
-Lap Pace Change
-     ↓
-Tyre Behaviour
-     ↓
-Strategy Signal
-     ↓
-Alert
-     ↓
-Grafana
+RAIN
+TYRE CRISIS
+MECHANICAL FAILURE
+PIT STOP
+COMMERCIAL SURGE
+DATA FAILURE
+CONFIGURATION FAILURE
 ```
 
-The user can observe how one event propagates across multiple streaming domains.
-
-This demonstrates that RACEPULSE is not simply displaying independent charts.
-
-It is **correlating streams into operational intelligence**.
+These scenarios allow the same platform to demonstrate performance, strategy, race-control, commercial, and reliability behaviour.
 
 ---
 
-# 🔄 Replay & Scenario Testing
+# 19. Testing & Validation
 
-RACEPULSE supports repeatable scenarios for development, testing and demonstrations.
-
-Possible modes:
+The final frozen dashboard build was validated with:
 
 ```text
-LIVE
-SCENARIO
-REPLAY
+Dashboard Python compilation     PASS
+Dashboard generation             PASS
+Generated JSON validation        6 / 6 PASS
+Git diff check                   PASS
+Unit tests                       110 PASS
+Integration tests                2 PASS
+Integration tests skipped       1
 ```
 
-Replay speeds can include:
+The final dashboard builder generated:
 
 ```text
-1×
-2×
-5×
-10×
+CEO Command Center               16 panels
+Race Operations                  17 panels
+Strategy Intelligence            14 panels
+Race Control                     14 panels
+Commercial Intelligence          16 panels
+Streaming Engineering            14 panels
 ```
 
-This enables:
-
-* Repeatable demonstrations
-* Regression testing
-* Formula comparison
-* Failure testing
-* Dashboard testing
+The final live race simulator was also validated through a **60-lap run**, with **84 events per lap**, and the Kafka pipeline was verified to drain successfully with consumer lag at zero across the active consumer groups.
 
 ---
 
-# ⚙️ Dynamic Configuration
+# 20. 12-Car Grid
 
-Important analytical parameters are externalized into configuration files.
+The simulator contains a 12-car grid:
 
-```text
-config/
-├── parameters.yaml
-├── formulas.yaml
-├── thresholds.yaml
-├── windows.yaml
-└── schemas/
-```
+| Car ID | Team |
+|---|---|
+| CAR_01 | Apex One |
+| CAR_02 | Vortex Racing |
+| CAR_03 | Velocity Motorsport |
+| CAR_04 | EcoDrive GP |
+| CAR_05 | Velocity Works |
+| CAR_06 | Northstar Racing |
+| CAR_07 | RainForce GP |
+| CAR_08 | Titan Motorsport |
+| CAR_09 | Endurance Racing |
+| CAR_10 | Midland GP |
+| CAR_11 | Raptor Racing |
+| CAR_12 | Phoenix Motorsport |
 
-This allows parameters such as:
-
-* Thresholds
-* Formula weights
-* Window sizes
-* Scenario parameters
-
-to be changed without rewriting the core consumer architecture.
-
-Example:
-
-```text
-Threshold
-2.0×
-   ↓
-2.5×
-```
-
-The system can reload valid configuration while continuing to operate.
-
-Invalid configuration is rejected rather than replacing the last known-good configuration.
+The dashboard car selector is restricted to the supported 12-car grid.
 
 ---
 
-# 🧪 Testing Strategy
-
-RACEPULSE uses multiple testing levels.
-
-```text
-tests/
-├── unit/
-├── integration/
-├── failure/
-└── scenarios/
-```
-
-## Unit Tests
-
-Test individual:
-
-* KPI formulas
-* Window calculations
-* Rules
-* Configuration
-* Event logic
-* Idempotency
-
-## Integration Tests
-
-Test:
-
-```text
-Kafka
- ↓
-Consumer
- ↓
-Analytics
- ↓
-MySQL
-```
-
-## Failure Tests
-
-Test:
-
-* Invalid events
-* Duplicate events
-* Invalid configuration
-* Producer failures
-* Stale streams
-* DLQ routing
-
-## Scenario Tests
-
-Validate controlled race scenarios such as:
-
-* Rain
-* Tyre crisis
-* Safety car
-* Mechanical failure
-* Close battle
-* Pit stop
-
----
-
-# 🐳 Technology Stack
-
-| Technology       | Purpose                                        |
-| ---------------- | ---------------------------------------------- |
-| Python           | Simulation, producers, consumers and analytics |
-| Apache Kafka     | Event streaming                                |
-| Apache ZooKeeper | Kafka coordination                             |
-| MySQL            | Analytical persistence                         |
-| Grafana          | Real-time dashboards                           |
-| Docker           | Infrastructure orchestration                   |
-| Pytest           | Automated testing                              |
-| YAML             | Configuration                                  |
-| Git / GitHub     | Version control and collaboration              |
-
----
-
-# 📁 Project Structure
+# 21. Project Structure
 
 ```text
 RACEPULSE/
 │
 ├── config/
-│   ├── parameters.yaml
 │   ├── formulas.yaml
+│   ├── parameters.yaml
 │   ├── thresholds.yaml
 │   ├── windows.yaml
+│   ├── cars.yaml
 │   └── schemas/
-│
-├── producers/
-│   ├── telemetry/
-│   ├── timing/
-│   ├── tyres/
-│   ├── weather/
-│   ├── pitstops/
-│   ├── incidents/
-│   ├── fans/
-│   └── sponsors/
-│
-├── simulator/
 │
 ├── consumers/
 │   ├── performance/
 │   ├── strategy/
 │   ├── race_control/
-│   └── commercial/
+│   ├── commercial/
+│   └── windowed/
+│
+├── producers/
+│
+├── simulator/
 │
 ├── engine/
 │   ├── validation/
-│   ├── formulas/
-│   ├── windows/
 │   ├── rules/
 │   ├── alerts/
-│   └── config/
+│   └── ...
 │
 ├── database/
 │   ├── schema.sql
-│   ├── migrations/
-│   └── queries/
+│   └── migrations/
 │
 ├── grafana/
 │   ├── dashboards/
-│   ├── queries/
-│   └── provisioning/
+│   ├── provisioning/
+│   └── ...
 │
 ├── tests/
 │   ├── unit/
 │   ├── integration/
-│   ├── failure/
-│   └── scenarios/
+│   └── ...
+│
+├── tools/
+│   └── dashboard_builder/
 │
 ├── docs/
-│   ├── architecture.md
-│   ├── event-contract.md
-│   ├── kpi-contract.md
-│   ├── database-contract.md
-│   ├── dashboard-contract.md
-│   ├── demo-script.md
-│   ├── team-work-division.md
-│   └── contribution-guide.md
 │
 ├── docker-compose.yml
 ├── requirements.txt
+├── Dockerfile
 ├── .env.example
 └── README.md
 ```
 
 ---
 
-# 🛠️ Installation
+# 22. Installation
 
 ## Prerequisites
 
-Install:
+Recommended environment:
 
-* Git
-* Python 3.11+
-* Docker Desktop
-* Docker Compose
-* VS Code or another IDE
+- Windows / Linux / macOS
+- Python 3.11+
+- Docker Desktop
+- Docker Compose
+- Git
+- VS Code or equivalent IDE
 
 ---
 
-# 📥 Clone the Repository
+## Clone
 
 ```bash
 git clone https://github.com/Parv-065040/RACEPULSE.git
@@ -1026,32 +906,7 @@ cd RACEPULSE
 
 ---
 
-# 🐳 Start Infrastructure
-
-```bash
-docker compose up -d
-```
-
-This starts the RACEPULSE infrastructure:
-
-```text
-Kafka
-ZooKeeper
-MySQL
-Grafana
-```
-
-Check running containers:
-
-```bash
-docker compose ps
-```
-
----
-
-# 🐍 Python Environment
-
-Create a virtual environment:
+## Python Environment
 
 ### Windows
 
@@ -1075,616 +930,272 @@ pip install -r requirements.txt
 
 ---
 
-# 🗄️ Database Setup
+# 23. Start the Platform
 
-Run the versioned migrations:
+Start Docker services:
 
 ```bash
-python -m database.migrations.run_migrations
+docker compose up -d
 ```
 
-The migration runner tracks which migrations have already been applied.
+Check service status:
+
+```bash
+docker compose ps
+```
+
+The Compose stack provides the streaming infrastructure, database, Grafana, consumers and simulator components defined by the project.
 
 ---
 
-# 🧪 Run Tests
+# 24. Run the Dashboard Builder
 
-Run the complete test suite:
+The Grafana dashboards are generated from the production dashboard builder.
+
+```bash
+python -m tools.dashboard_builder.build
+```
+
+Validate the Python source:
+
+```bash
+python -m py_compile .\tools\dashboard_builder\production.py
+```
+
+The generated dashboards are stored under:
+
+```text
+grafana/dashboards/generated/
+```
+
+---
+
+# 25. Run Tests
+
+Unit tests:
+
+```bash
+python -m pytest tests/unit -q
+```
+
+Integration tests:
+
+```bash
+python -m pytest tests/integration -q
+```
+
+Full suite:
 
 ```bash
 python -m pytest -q
 ```
 
-Run unit tests:
-
-```bash
-python -m pytest tests/unit -v
-```
-
-Run integration tests:
-
-```bash
-python -m pytest tests/integration -v
-```
-
-Run scenario tests:
-
-```bash
-python -m pytest tests/scenarios -v
-```
-
-Run failure tests:
-
-```bash
-python -m pytest tests/failure -v
-```
-
 ---
 
-# ▶️ Running RACEPULSE
+# 26. Dockerized Race Run
 
-The exact producer/consumer startup sequence is documented in:
-
-```text
-docs/demo-script.md
-```
-
-The general flow is:
-
-```text
-1. Start Docker infrastructure
-        ↓
-2. Apply database migrations
-        ↓
-3. Start race simulator
-        ↓
-4. Start Kafka producers
-        ↓
-5. Start analytics consumers
-        ↓
-6. Generate KPI results
-        ↓
-7. Persist analytical results
-        ↓
-8. Open Grafana
-        ↓
-9. Trigger scenarios
-        ↓
-10. Observe alerts and dashboard changes
-```
-
----
-
-# 🔍 Example End-to-End Flow
-
-A simplified timing flow:
-
-```text
-Race Simulator
-      ↓
-Timing Producer
-      ↓
-race.timing
-      ↓
-Performance Consumer
-      ↓
-Lap Pace Delta
-      ↓
-Rule Evaluation
-      ↓
-Alert
-      ↓
-analytics.alerts
-      ↓
-MySQL
-      ↓
-Grafana
-```
-
-A strategy flow:
-
-```text
-Timing
-Tyres
-Weather
-Pit Stops
-   ↓
-Strategy Consumer
-   ↓
-Windowing
-   ↓
-Tyre Degradation
-   ↓
-Strategy Risk
-   ↓
-Alert
-```
-
-A race-control flow:
-
-```text
-Telemetry
-Timing
-Weather
-Incidents
-   ↓
-Race Control Consumer
-   ↓
-Incident / Track Risk
-   ↓
-Race Control Alert
-```
-
----
-
-# 🔐 Configuration Philosophy
-
-RACEPULSE separates configuration from analytical logic.
-
-Instead of hardcoding:
-
-```python
-if degradation > 0.75:
-```
-
-the system uses configuration:
-
-```text
-formula
-threshold
-window
-severity
-version
-```
-
-This makes the analytics layer easier to:
-
-* Test
-* Modify
-* Demonstrate
-* Version
-* Audit
-
----
-
-# 📐 Design Principles
-
-## 1. Event-driven
-
-Business and race events flow through Kafka rather than tightly coupled point-to-point communication.
-
-## 2. Stateful simulation
-
-Events depend on previous state rather than being independently random.
-
-## 3. Config-driven analytics
-
-Thresholds and analytical parameters are externalized.
-
-## 4. Failure-closed
-
-Invalid inputs should not silently corrupt downstream analytics.
-
-## 5. Idempotent processing
-
-Replay should not create duplicate analytical results.
-
-## 6. Separation of concerns
-
-```text
-Producer
-Consumer
-Formula
-Window
-Rule
-Alert
-Database
-Dashboard
-```
-
-have distinct responsibilities.
-
-## 7. Observability
-
-The platform monitors both the **race** and the **streaming system running the race intelligence**.
-
----
-
-# 🎯 What RACEPULSE Can Tell Users
-
-RACEPULSE is designed to answer questions such as:
-
-### Performance
-
-* Is a car's pace deteriorating?
-* Is the gap to the leader widening?
-* Is speed changing significantly?
-
-### Tyres
-
-* Are tyres degrading?
-* Is degradation accelerating?
-* Is grip falling?
-
-### Weather
-
-* Is changing weather affecting track conditions?
-* Is grip changing?
-* Is performance responding to those changes?
-
-### Strategy
-
-* Is a pit-window signal emerging?
-* Is a pit stop efficient?
-* Is tyre degradation becoming strategically relevant?
-
-### Race Control
-
-* Has an incident occurred?
-* Is a vehicle at risk?
-* Has a safety-car event changed race conditions?
-* Has a car legitimately retired?
-
-### Commercial
-
-* Is fan engagement increasing?
-* Is sponsorship exposure increasing?
-* Is a commercial surge occurring?
-
-### Platform Health
-
-* Are events arriving?
-* Are consumers processing them?
-* Is latency increasing?
-* Are events entering the DLQ?
-* Has a stream become stale?
-
----
-
-# 🧩 Composite Intelligence
-
-RACEPULSE can also support configurable composite indicators such as:
-
-* Race Risk Index
-* Strategy Risk
-* Driver Performance Index
-* Fan Excitement Index
-
-These are treated as **configurable analytical heuristics**, not as scientifically validated real-world racing models.
-
-Each composite metric should document:
-
-```text
-Inputs
-Weights
-Normalization
-Formula
-Thresholds
-Version
-Rationale
-```
-
----
-
-# 👥 Team Contributions
-
-RACEPULSE was developed as a four-member team.
-
-| Member                       | Responsibility                     |
-| ---------------------------- | ---------------------------------- |
-| **Parv — 065040**            | Streaming Architecture & Analytics |
-| **Awantika Kholia — 065060** | Race Simulation & Core Producers   |
-| **Navroop — 065039**         | Reliability & Business Streams     |
-| **Yashi Tiwari — 065054**    | Grafana & Business Intelligence    |
-
----
-
-## Parv — Streaming Architecture & Analytics
-
-Primary areas:
-
-```text
-consumers/
-engine/
-database/
-config/
-tests/
-```
-
-Key responsibilities:
-
-* Streaming consumer architecture
-* KPI engine
-* Windowing
-* Rules
-* Alerts
-* MySQL analytical layer
-* Configuration
-* Reliability integration
-* Integration testing
-
----
-
-## Awantika Kholia — Race Simulation & Core Producers
-
-Primary areas:
-
-```text
-simulator/
-producers/
-tests/scenarios/
-```
-
-Key responsibilities:
-
-* Stateful race simulation
-* Timing producer
-* Telemetry producer
-* Tyre producer
-* Weather producer
-* Pit-stop producer
-* Incident producer
-* Race scenarios
-
-Her contribution establishes the simulation-to-streaming layer, where race state is converted into related Kafka event streams.
-
----
-
-## Navroop — Reliability & Business Streams
-
-Primary areas:
-
-```text
-engine/validation/
-producers/fans/
-producers/sponsors/
-tests/failure/
-```
-
-Key responsibilities:
-
-* Extended event validation
-* Failure handling
-* Fan streams
-* Sponsorship streams
-* Failure-injection testing
-
----
-
-## Yashi Tiwari — Grafana & Business Intelligence
-
-Primary areas:
-
-```text
-grafana/
-grafana/dashboards/
-grafana/queries/
-grafana/provisioning/
-```
-
-Key responsibilities:
-
-* Grafana dashboards
-* Business intelligence views
-* Executive dashboard
-* Strategy dashboard
-* Commercial dashboard
-* Streaming engineering dashboard
-
----
-
-# 🌿 Git Workflow
-
-RACEPULSE uses a protected integration workflow.
-
-```text
-develop
-   ↓
-feature/<member>-<task>
-   ↓
-Build
-   ↓
-Test
-   ↓
-Commit
-   ↓
-Push
-   ↓
-Pull Request
-   ↓
-Review
-   ↓
-Merge → develop
-   ↓
-Final Integration
-   ↓
-main
-```
-
-No direct development should be performed on `main`.
-
-Feature branches should be deleted after successful merge.
-
----
-
-# 📚 Documentation
-
-Detailed technical documentation is maintained in:
-
-```text
-docs/
-```
-
-Important documents:
-
-| Document                | Purpose                     |
-| ----------------------- | --------------------------- |
-| `architecture.md`       | System architecture         |
-| `event-contract.md`     | Kafka event schemas         |
-| `kpi-contract.md`       | KPI definitions             |
-| `database-contract.md`  | Database structures         |
-| `dashboard-contract.md` | Dashboard specifications    |
-| `demo-script.md`        | Demonstration sequence      |
-| `team-work-division.md` | Ownership and collaboration |
-| `contribution-guide.md` | Development workflow        |
-
----
-
-# 🎓 Academic / Learning Value
-
-RACEPULSE demonstrates multiple concepts from modern data engineering and analytics:
-
-* Event-driven architecture
-* Apache Kafka
-* Streaming data processing
-* Stateful event simulation
-* Windowed aggregation
-* KPI engineering
-* Rule-based alerting
-* Data validation
-* Dead-letter queues
-* Idempotency
-* Database persistence
-* Configuration management
-* Observability
-* Dashboard engineering
-* Failure testing
-* Git-based collaboration
-* Containerized infrastructure
-
----
-
-# ⚠️ Scope & Limitations
-
-RACEPULSE uses simulated race data for educational and demonstration purposes.
-
-It is **not** intended to replace:
-
-* Professional race engineers
-* Official timing systems
-* FIA/race-control systems
-* Validated motorsport strategy software
-* Real-world safety-critical systems
-
-The analytical formulas and composite indicators are configurable project models and should not be interpreted as validated real-world racing algorithms.
-
----
-
-# 🔮 Future Extensions
-
-Potential future work includes:
-
-### Advanced Anomaly Detection
-
-Machine-learning models for detecting unusual telemetry patterns.
-
-### AI Race Explanations
-
-Natural-language explanations of correlated race events.
+A representative simulator run can be executed through Docker.
 
 Example:
 
-> "CAR_07's pace deteriorated during the last three windows while tyre grip declined and track wetness increased."
-
-### External Data Sources
-
-Integration with real-time external racing APIs.
-
-### Advanced Strategy Modeling
-
-Simulation of alternative pit strategies.
-
-### Automated KPI Generation
-
-Controlled generation and registration of new analytical metrics.
-
-### Venue Operations
-
-Integration of:
-
-* Crowd movement
-* Entry/exit flows
-* Parking
-* Concessions
-* Venue incidents
-
----
-
-# 🏁 The RACEPULSE Philosophy
-
-RACEPULSE is built around a simple idea:
-
-> **Raw streaming data is not intelligence.**
-
-The value comes from transforming:
-
-```text
-Events
-  ↓
-Context
-  ↓
-Patterns
-  ↓
-Signals
-  ↓
-Alerts
-  ↓
-Decision Support
+```powershell
+docker compose run --rm `
+  -e KAFKA_BOOTSTRAP_SERVERS=kafka:29092 `
+  race-simulator `
+  python -m simulator.live_runner `
+  --scenario NORMAL_RACE `
+  --laps 20 `
+  --delay 2
 ```
 
-The platform therefore focuses on connecting events across domains instead of simply displaying more data.
+The final validation run was also performed over 60 laps.
 
 ---
 
-# 📌 One-Line Summary
+# 27. Configuration Examples
 
-**RACEPULSE is a real-time event-driven motorsport intelligence platform that converts race, operational, and commercial data streams into configurable KPIs, alerts, and decision-support dashboards using Kafka, Python, MySQL, Docker, and Grafana.**
+Formula configuration is maintained separately from Python code.
 
----
+Example:
 
-# ⭐ Project Status
-
-**Architecture:** Production-style streaming architecture
-**Streaming:** Apache Kafka
-**Processing:** Python consumers + configurable analytics engine
-**Persistence:** MySQL
-**Visualization:** Grafana
-**Infrastructure:** Docker
-**Testing:** Pytest
-**Simulation:** Stateful multi-scenario race simulator
-
-The final release is intended to provide a complete:
-
-```text
-SIMULATE
-   ↓
-STREAM
-   ↓
-PROCESS
-   ↓
-ANALYZE
-   ↓
-ALERT
-   ↓
-PERSIST
-   ↓
-VISUALIZE
-   ↓
-INVESTIGATE
+```yaml
+strategy:
+  STR-001:
+    name: Tyre Degradation Risk
+    formula: "degradation_per_lap*5 + grip_loss*2 + pace_delta_ratio*0.4 + track_wetness*0.5"
+    version: 2
 ```
 
-pipeline for real-time motorsport event intelligence.
+Thresholds are maintained independently:
+
+```text
+KPI
+ ↓
+Warning threshold
+ ↓
+Critical threshold
+```
+
+This makes live demonstration and analytical tuning easier.
 
 ---
 
-## 👨‍💻 Built by the RACEPULSE Team
+# 28. Security & Environment
+
+Do not commit real credentials.
+
+Use:
+
+```text
+.env
+```
+
+locally and provide:
+
+```text
+.env.example
+```
+
+for required configuration.
+
+Sensitive credentials should never be placed in source code or committed to GitHub.
+
+---
+
+# 29. Scope & Limitations
+
+RACEPULSE is an academic and demonstration platform using simulated motorsport data.
+
+It is not intended to replace:
+
+- Official race timing systems
+- Professional race engineers
+- FIA/race-control systems
+- Safety-critical systems
+- Validated commercial motorsport strategy software
+
+The formulas, thresholds and risk indicators are project-defined analytical models. They demonstrate streaming analytics and decision-support architecture rather than claiming real-world motorsport validation.
+
+---
+
+# 30. Future Scope
+
+Potential extensions include:
+
+### Advanced Anomaly Detection
+
+Machine-learning models for telemetry and race-event anomalies.
+
+### AI-Powered Race Explanations
+
+Natural-language explanations of correlated signals.
+
+Example:
+
+```text
+CAR_07 pace deteriorated while grip decreased
+and track wetness increased across recent windows.
+```
+
+### Strategy Simulation
+
+Evaluate alternative pit-stop strategies against simulated future race conditions.
+
+### Real-Time External Data
+
+Connect official or licensed external racing feeds.
+
+### Predictive Analytics
+
+Add predictive models for:
+
+- Tyre life
+- Pit-window probability
+- Mechanical risk
+- Pace degradation
+- Fan engagement
+
+### Venue Intelligence
+
+Extend the platform to:
+
+- Crowd movement
+- Entry/exit flows
+- Parking
+- Concessions
+- Venue incidents
+
+---
+
+# 31. Team
 
 **FORE School of Management, New Delhi**
 
-PGDM — Big Data Analytics
+**PGDM — Big Data Analytics**
 
-**Parv · Awantika Kholia · Navroop · Yashi Tiwari**
+| Member | ID |
+|---|---:|
+| Parv | 065040 |
+| Awantika Kholia | 065060 |
+| Navroop | 065039 |
+| Yashi Tiwari | 065054 |
+
+The project was developed collaboratively using Git/GitHub feature branches, testing, integration and release tagging.
 
 ---
 
-> 🏎️ **RACEPULSE — From Race Events to Real-Time Intelligence.**
+# 32. Final Release
+
+The final production-style release is tagged:
+
+```text
+v1.0-final
+```
+
+Release philosophy:
+
+```text
+SIMULATE
+    ↓
+STREAM
+    ↓
+VALIDATE
+    ↓
+PROCESS
+    ↓
+ANALYZE
+    ↓
+ALERT
+    ↓
+PERSIST
+    ↓
+VISUALIZE
+    ↓
+DECIDE
+```
+
+The final dashboard layer is frozen and validated as part of this release.
+
+---
+
+# 33. Key Takeaway
+
+RACEPULSE demonstrates how streaming infrastructure can move beyond simply collecting events and instead create a complete analytical decision-support pipeline.
+
+```text
+EVENTS
+  ↓
+CONTEXT
+  ↓
+STREAMING ANALYTICS
+  ↓
+SIGNALS
+  ↓
+ALERTS
+  ↓
+DECISION SUPPORT
+```
+
+> **RACEPULSE — From Race Events to Real-Time Intelligence.**
+
+
