@@ -797,6 +797,206 @@
         }
       ],
       "id": 12
+    },
+    {
+      "type": "piechart",
+      "title": "ALERT SEVERITY MIX",
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "critical"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EF4444"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warning"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F59E0B"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#36D399"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "none"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#36D399"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": [
+          "name",
+          "value",
+          "percent"
+        ],
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT\n    SUM(CASE WHEN a.severity='critical' THEN 1 ELSE 0 END) AS critical,\n    SUM(CASE WHEN a.severity='warning' THEN 1 ELSE 0 END) AS warning\nFROM alerts a CROSS JOIN race\nWHERE a.created_at BETWEEN\n      DATE_SUB(race.race_end, INTERVAL 10 MINUTE)\n  AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)",
+          "format": "table"
+        }
+      ],
+      "id": 13
+    },
+    {
+      "type": "barchart",
+      "title": "ALERT SIGNAL MIX",
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelSpacing": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT\n    CAST(COALESCE(NULLIF(TRIM(a.kpi_id), ''), 'UNKNOWN') AS CHAR) AS alert_signal,\n    COUNT(*) AS alert_count\nFROM alerts a CROSS JOIN race\nWHERE a.created_at BETWEEN\n      DATE_SUB(race.race_end, INTERVAL 10 MINUTE)\n  AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)\n  AND a.kpi_id IS NOT NULL\nGROUP BY CAST(COALESCE(NULLIF(TRIM(a.kpi_id), ''), 'UNKNOWN') AS CHAR)\nORDER BY alert_count DESC\nLIMIT 12",
+          "format": "table"
+        }
+      ],
+      "id": 14
     }
   ],
   "refresh": "5s",

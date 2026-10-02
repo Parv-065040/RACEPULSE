@@ -967,6 +967,130 @@
         }
       ],
       "id": 14
+    },
+    {
+      "type": "barchart",
+      "title": "SPONSOR VISIBILITY // 60-LAP TOTAL",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F5C451"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelSpacing": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT\n    c.entity_id AS sponsor,\n    ROUND(SUM(c.value),1) AS visibility_s\nFROM commercial_results c CROSS JOIN race\nWHERE c.kpi_id='COM-002'\n  AND c.event_time BETWEEN race.race_start AND race.race_end\n  AND c.lap_number BETWEEN 1 AND 60\n  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'\nGROUP BY c.entity_id\nORDER BY visibility_s DESC\nLIMIT 12",
+          "format": "table"
+        }
+      ],
+      "id": 15
+    },
+    {
+      "type": "barchart",
+      "title": "SPONSOR CONVERSION // 60-LAP AVERAGE",
+      "gridPos": {
+        "x": 12,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F5C451"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelSpacing": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT\n    c.entity_id AS sponsor,\n    ROUND(AVG(c.value)*100,2) AS conversion_pct\nFROM commercial_results c CROSS JOIN race\nWHERE c.kpi_id='COM-003'\n  AND c.event_time BETWEEN race.race_start AND race.race_end\n  AND c.lap_number BETWEEN 1 AND 60\n  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'\nGROUP BY c.entity_id\nORDER BY conversion_pct DESC\nLIMIT 12",
+          "format": "table"
+        }
+      ],
+      "id": 16
     }
   ],
   "refresh": "5s",

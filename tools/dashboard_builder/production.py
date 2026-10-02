@@ -1,4 +1,4 @@
-﻿
+
 from __future__ import annotations
 
 import json
@@ -135,15 +135,182 @@ def table(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8) -> dict
 
 
 def bar(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8,
-        unit: str = "short", decimals: int = 1) -> dict[str, Any]:
+        unit: str = "short", decimals: int = 1,
+        color: str = TEXT, threshold_colors: bool = False) -> dict[str, Any]:
     p = base_panel(title, "barchart", x, y, w, h)
     p["targets"] = [target(sql)]
-    p["fieldConfig"]["defaults"].update({"unit": unit, "decimals": decimals})
+
+    defaults = {
+        "unit": unit,
+        "decimals": decimals,
+    }
+
+    if threshold_colors:
+        defaults["color"] = {"mode": "thresholds"}
+    else:
+        defaults["color"] = {
+            "mode": "fixed",
+            "fixedColor": color,
+        }
+
+    p["fieldConfig"]["defaults"].update(defaults)
     p["options"] = {
         "orientation": "horizontal",
         "showValue": "auto",
         "legend": {"displayMode": "hidden"},
         "tooltip": {"mode": "single"},
+        "xTickLabelSpacing": 1,
+    }
+    return p
+
+
+def histogram(title: str, sql: str, x: int, y: int,
+             w: int = 12, h: int = 8,
+             unit: str = "short", decimals: int = 1) -> dict[str, Any]:
+    p = base_panel(title, "histogram", x, y, w, h)
+    p["targets"] = [target(sql)]
+    p["fieldConfig"]["defaults"].update({
+        "unit": unit,
+        "decimals": decimals,
+    })
+    p["options"] = {
+        "bucketCount": 24,
+        "combine": True,
+        "stacking": "normal",
+        "tooltip": {"mode": "single"},
+        "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+        },
+    }
+    return p
+
+
+def pie(title: str, sql: str, x: int, y: int,
+        w: int = 12, h: int = 8) -> dict[str, Any]:
+    p = base_panel(title, "piechart", x, y, w, h)
+    p["targets"] = [target(sql)]
+
+    p["fieldConfig"]["defaults"].update({
+        "color": {"mode": "fixed", "fixedColor": TEXT},
+    })
+
+    p["fieldConfig"]["overrides"] = [
+        {
+            "matcher": {"id": "byName", "options": "critical"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": CRITICAL},
+                }
+            ],
+        },
+        {
+            "matcher": {"id": "byName", "options": "warning"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": WARNING},
+                }
+            ],
+        },
+        {
+            "matcher": {"id": "byName", "options": "normal"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": NORMAL},
+                }
+            ],
+        },
+        {
+            "matcher": {"id": "byName", "options": "none"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": NORMAL},
+                }
+            ],
+        },
+    ]
+
+    p["options"] = {
+        "pieType": "donut",
+        "displayLabels": ["name", "value", "percent"],
+        "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": True,
+        },
+        "tooltip": {
+            "mode": "single",
+            "sort": "desc",
+        },
+        "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": True,
+            "values": ["value", "percent"],
+        },
+    }
+    return p
+
+
+def stacked_bar(title: str, sql: str, x: int, y: int,
+                w: int = 12, h: int = 8,
+                unit: str = "short", decimals: int = 0) -> dict[str, Any]:
+    p = base_panel(title, "barchart", x, y, w, h)
+    p["targets"] = [target(sql)]
+
+    p["fieldConfig"]["defaults"].update({
+        "unit": unit,
+        "decimals": decimals,
+        "color": {"mode": "fixed", "fixedColor": TEXT},
+    })
+
+    p["fieldConfig"]["overrides"] = [
+        {
+            "matcher": {"id": "byName", "options": "critical"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": CRITICAL},
+                }
+            ],
+        },
+        {
+            "matcher": {"id": "byName", "options": "warning"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": WARNING},
+                }
+            ],
+        },
+        {
+            "matcher": {"id": "byName", "options": "normal"},
+            "properties": [
+                {
+                    "id": "color",
+                    "value": {"mode": "fixed", "fixedColor": NORMAL},
+                }
+            ],
+        },
+    ]
+
+    p["options"] = {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "normal",
+        "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": True,
+        },
+        "tooltip": {
+            "mode": "single",
+            "sort": "desc",
+        },
     }
     return p
 
@@ -732,6 +899,182 @@ ORDER BY failed_at DESC LIMIT 30
 """)
 
 
+LAP_TIME_DISTRIBUTION = q(f"""
+{RACE}
+SELECT ROUND(k.lap_time_ms/1000.0,3) AS lap_time_s
+FROM kpi_results k CROSS JOIN race
+WHERE k.event_time BETWEEN race.race_start AND race.race_end
+  AND k.lap_number BETWEEN 1 AND 60
+  AND k.lap_time_ms > 0
+  AND k.car_id REGEXP '{CAR_RE}'
+  AND k.car_id REGEXP '${{car:regex}}'
+ORDER BY k.lap_time_ms
+""")
+
+CURRENT_SPEED_RANKING = q(f"""
+{RACE}
+,ranked AS (
+    SELECT
+        w.car_id,
+        w.value,
+        ROW_NUMBER() OVER (
+            PARTITION BY w.car_id
+            ORDER BY w.window_start DESC, w.id DESC
+        ) AS rn
+    FROM windowed_kpi_results w CROSS JOIN race
+    WHERE w.kpi_id='KPI-003'
+      AND w.window_start BETWEEN race.race_start AND race.race_end
+      AND w.car_id REGEXP '{CAR_RE}'
+      AND w.car_id REGEXP '${{car:regex}}'
+)
+SELECT car_id AS car,
+       ROUND(value,1) AS speed_kmh
+FROM ranked
+WHERE rn=1
+ORDER BY speed_kmh DESC
+""")
+
+GAP_CURRENT = q(f"""
+{RACE}
+,ranked AS (
+    SELECT
+        g.car_id,
+        g.lap_number,
+        g.gap_to_leader_ms,
+        g.event_time,
+        g.id,
+        ROW_NUMBER() OVER (
+            PARTITION BY g.car_id
+            ORDER BY g.event_time DESC, g.id DESC
+        ) AS rn
+    FROM gap_trend_results g CROSS JOIN race
+    WHERE g.event_time BETWEEN race.race_start AND race.race_end
+      AND g.lap_number BETWEEN 1 AND 60
+      AND g.car_id REGEXP '{CAR_RE}'
+      AND g.car_id REGEXP '${{car:regex}}'
+)
+SELECT car_id AS car,
+       lap_number AS lap,
+       ROUND(gap_to_leader_ms/1000.0,2) AS gap_s
+FROM ranked
+WHERE rn=1
+ORDER BY gap_s DESC
+""")
+
+ALERT_SEVERITY_MIX = q(f"""
+{RACE}
+SELECT
+    SUM(CASE WHEN a.severity='critical' THEN 1 ELSE 0 END) AS critical,
+    SUM(CASE WHEN a.severity='warning' THEN 1 ELSE 0 END) AS warning
+FROM alerts a CROSS JOIN race
+WHERE a.created_at BETWEEN
+      DATE_SUB(race.race_end, INTERVAL 10 MINUTE)
+  AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
+""")
+
+TYRE_RISK_CURRENT = q(f"""
+{RACE}
+,ranked AS (
+    SELECT
+        s.car_id,
+        s.value,
+        s.severity,
+        s.lap_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY s.car_id
+            ORDER BY s.event_time DESC, s.id DESC
+        ) AS rn
+    FROM strategy_results s CROSS JOIN race
+    WHERE s.kpi_id='STR-001'
+      AND s.event_time BETWEEN race.race_start AND race.race_end
+      AND s.lap_number BETWEEN 1 AND 60
+      AND s.car_id REGEXP '{CAR_RE}'
+      AND s.car_id REGEXP '${{car:regex}}'
+)
+SELECT car_id AS car,
+       ROUND(value,3) AS tyre_risk
+FROM ranked
+WHERE rn=1
+ORDER BY tyre_risk DESC
+""")
+
+VEHICLE_RISK_STATES_BY_CAR = q(f"""
+{RACE}
+SELECT
+    rc.car_id AS car,
+    SUM(CASE WHEN rc.severity='critical' THEN 1 ELSE 0 END) AS critical,
+    SUM(CASE WHEN rc.severity='warning' THEN 1 ELSE 0 END) AS warning,
+    SUM(CASE WHEN rc.severity='none' THEN 1 ELSE 0 END) AS normal
+FROM race_control_results rc CROSS JOIN race
+WHERE rc.kpi_id='RC-002'
+  AND rc.event_time BETWEEN race.race_start AND race.race_end
+  AND rc.lap_number BETWEEN 1 AND 60
+  AND rc.car_id REGEXP '{CAR_RE}'
+  AND rc.car_id REGEXP '${{car:regex}}'
+GROUP BY rc.car_id
+ORDER BY rc.car_id
+""")
+
+VEHICLE_RISK_MIX = q(f"""
+{RACE}
+SELECT
+    SUM(CASE WHEN rc.severity='critical' THEN 1 ELSE 0 END) AS critical,
+    SUM(CASE WHEN rc.severity='warning' THEN 1 ELSE 0 END) AS warning,
+    SUM(CASE WHEN rc.severity='none' THEN 1 ELSE 0 END) AS normal
+FROM race_control_results rc CROSS JOIN race
+WHERE rc.kpi_id='RC-002'
+  AND rc.event_time BETWEEN race.race_start AND race.race_end
+  AND rc.lap_number BETWEEN 1 AND 60
+  AND rc.car_id REGEXP '{CAR_RE}'
+  AND rc.car_id REGEXP '${{car:regex}}'
+""")
+
+SPONSOR_VISIBILITY_TOTAL = q(f"""
+{RACE}
+SELECT
+    c.entity_id AS sponsor,
+    ROUND(SUM(c.value),1) AS visibility_s
+FROM commercial_results c CROSS JOIN race
+WHERE c.kpi_id='COM-002'
+  AND c.event_time BETWEEN race.race_start AND race.race_end
+  AND c.lap_number BETWEEN 1 AND 60
+  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
+GROUP BY c.entity_id
+ORDER BY visibility_s DESC
+LIMIT 12
+""")
+
+SPONSOR_CONVERSION_AVG = q(f"""
+{RACE}
+SELECT
+    c.entity_id AS sponsor,
+    ROUND(AVG(c.value)*100,2) AS conversion_pct
+FROM commercial_results c CROSS JOIN race
+WHERE c.kpi_id='COM-003'
+  AND c.event_time BETWEEN race.race_start AND race.race_end
+  AND c.lap_number BETWEEN 1 AND 60
+  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
+GROUP BY c.entity_id
+ORDER BY conversion_pct DESC
+LIMIT 12
+""")
+
+ALERT_SIGNAL_MIX = q(f"""
+{RACE}
+SELECT
+    CAST(COALESCE(NULLIF(TRIM(a.kpi_id), ''), 'UNKNOWN') AS CHAR) AS alert_signal,
+    COUNT(*) AS alert_count
+FROM alerts a CROSS JOIN race
+WHERE a.created_at BETWEEN
+      DATE_SUB(race.race_end, INTERVAL 10 MINUTE)
+  AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
+  AND a.kpi_id IS NOT NULL
+GROUP BY CAST(COALESCE(NULLIF(TRIM(a.kpi_id), ''), 'UNKNOWN') AS CHAR)
+ORDER BY alert_count DESC
+LIMIT 12
+""")
+
+
 CURRENT_PACE_RANKING = q(f"""
 {RACE}
 ,valid AS (
@@ -792,7 +1135,8 @@ def build_executive():
         table("12-Car Executive Status", CURRENT_CAR_STATUS, 0, 25, 24, 9),
         table("Executive Alert Feed", ALERT_FEED, 0, 34, 12, 8),
         table("Strategy Decision Feed", STRATEGY_FEED, 12, 34, 12, 8),
-        bar("Current Pace Delta // 12-Car Ranking", CURRENT_PACE_RANKING, 0, 42, 12, 8, "suffix:s", 2),
+        bar("Current Pace Delta // 12-Car Ranking", CURRENT_PACE_RANKING, 0, 42, 12, 8, "suffix:s", 2, threshold_colors=True),
+        histogram("Lap-Time Distribution // 60 Laps", LAP_TIME_DISTRIBUTION, 12, 42, 12, 8, "suffix:s", 2),
     ]
     return dashboard("racepulse-ceo-command-center", "RACEPULSE // CEO Command Center",
                       "Executive command center for live race, strategy, commercial and risk intelligence.", panels)
@@ -816,6 +1160,9 @@ def build_operations():
         table("12-Car Performance Matrix", CURRENT_CAR_STATUS, 0, 24, 24, 9),
         table("Performance Alert Feed", PERFORMANCE_ALERTS, 0, 33, 12, 8),
         table("Race Control Alert Feed", RACE_CONTROL_FEED, 12, 33, 12, 8),
+        bar("Current Speed // 12-Car Ranking", CURRENT_SPEED_RANKING, 0, 42, 12, 8, "kmh", 1, color=TELEMETRY),
+        bar("Gap to Leader // Current Lap", GAP_CURRENT, 12, 42, 12, 8, "suffix:s", 0, color=TELEMETRY),
+        pie("Alert Severity Mix", ALERT_SEVERITY_MIX, 0, 50, 12, 8),
     ]
     return dashboard("racepulse-race-operations", "RACEPULSE // Race Operations",
                       "Live performance workstation for race engineering.", panels)
@@ -837,6 +1184,8 @@ def build_strategy():
         table("12-Car Strategy Matrix", STRATEGY_MATRIX, 0, 16, 24, 9),
         table("Strategy Decision Feed", STRATEGY_FEED, 0, 25, 12, 9),
         table("Current Race Performance Context", CURRENT_CAR_STATUS, 12, 25, 12, 9),
+        bar("Tyre Risk // Current Lap", TYRE_RISK_CURRENT, 0, 34, 12, 8, "none", 2, threshold_colors=True),
+        stacked_bar("Vehicle Risk States // 60 Laps", VEHICLE_RISK_STATES_BY_CAR, 12, 34, 12, 8),
     ]
     return dashboard("racepulse-strategy", "RACEPULSE // Strategy Intelligence",
                       "Strategy workstation for tyre risk and pit-window intelligence.", panels)
@@ -858,6 +1207,8 @@ def build_control():
         table("12-Car Safety Matrix", RACE_CONTROL_MATRIX, 0, 16, 24, 9),
         table("Race Control Alert Feed", RACE_CONTROL_FEED, 0, 25, 12, 9),
         table("Executive Alert Context", ALERT_FEED, 12, 25, 12, 9),
+        pie("Vehicle Risk States // 60 Laps", VEHICLE_RISK_MIX, 0, 34, 12, 8),
+        pie("Alert Severity Mix", ALERT_SEVERITY_MIX, 12, 34, 12, 8),
     ]
     return dashboard("racepulse-race-control", "RACEPULSE // Race Control",
                       "Race-control and safety intelligence workstation.", panels)
@@ -881,6 +1232,8 @@ def build_commercial():
         table("Sponsor Scorecard", COMMERCIAL_SCORECARD, 0, 24, 24, 8),
         table("Commercial Activity Feed", COMMERCIAL_FEED, 0, 32, 12, 9),
         table("Commercial Signal Context", COMMERCIAL_FEED, 12, 32, 12, 9),
+        bar("Sponsor Visibility // 60-Lap Total", SPONSOR_VISIBILITY_TOTAL, 0, 41, 12, 8, "suffix:s", 1, color=COMMERCIAL),
+        bar("Sponsor Conversion // 60-Lap Average", SPONSOR_CONVERSION_AVG, 12, 41, 12, 8, "percent", 2, color=COMMERCIAL),
     ]
     return dashboard("racepulse-commercial", "RACEPULSE // Commercial Intelligence",
                       "Commercial intelligence for fan and sponsor performance.", panels)
@@ -902,6 +1255,8 @@ def build_engineering():
         table("Consumer Health Matrix", HEALTH_MATRIX, 0, 16, 24, 8),
         table("Infrastructure Alert Feed", INFRA_FEED, 0, 24, 12, 9),
         table("Data Quality / DLQ Feed", DATA_QUALITY, 12, 24, 12, 9),
+        pie("Alert Severity Mix", ALERT_SEVERITY_MIX, 0, 33, 12, 8),
+        bar("Alert Signal Mix", ALERT_SIGNAL_MIX, 12, 33, 12, 8, "short", 0, color=TELEMETRY),
     ]
     return dashboard("racepulse-streaming-engineering", "RACEPULSE // Streaming Engineering",
                       "Streaming platform health, lag, validation and data-quality control room.", panels)
@@ -938,9 +1293,3 @@ if __name__ == "__main__":
     print("=" * 70)
     print("All production dashboards generated.")
     print("=" * 70)
-
-
-
-
-
-

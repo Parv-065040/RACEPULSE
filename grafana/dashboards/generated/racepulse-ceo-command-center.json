@@ -981,8 +981,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "fixed",
-            "fixedColor": "#E8EDF2"
+            "mode": "thresholds"
           },
           "thresholds": {
             "mode": "absolute",
@@ -1014,7 +1013,8 @@
         },
         "tooltip": {
           "mode": "single"
-        }
+        },
+        "xTickLabelSpacing": 1
       },
       "targets": [
         {
@@ -1028,6 +1028,69 @@
         }
       ],
       "id": 15
+    },
+    {
+      "type": "histogram",
+      "title": "LAP-TIME DISTRIBUTION // 60 LAPS",
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "bucketCount": 24,
+        "combine": true,
+        "stacking": "normal",
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "hidden",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT ROUND(k.lap_time_ms/1000.0,3) AS lap_time_s\nFROM kpi_results k CROSS JOIN race\nWHERE k.event_time BETWEEN race.race_start AND race.race_end\n  AND k.lap_number BETWEEN 1 AND 60\n  AND k.lap_time_ms > 0\n  AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n  AND k.car_id REGEXP '${car:regex}'\nORDER BY k.lap_time_ms",
+          "format": "table"
+        }
+      ],
+      "id": 16
     }
   ],
   "refresh": "5s",

@@ -967,6 +967,268 @@
         }
       ],
       "id": 14
+    },
+    {
+      "type": "barchart",
+      "title": "CURRENT SPEED // 12-CAR RANKING",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "kmh",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelSpacing": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\n,ranked AS (\n    SELECT\n        w.car_id,\n        w.value,\n        ROW_NUMBER() OVER (\n            PARTITION BY w.car_id\n            ORDER BY w.window_start DESC, w.id DESC\n        ) AS rn\n    FROM windowed_kpi_results w CROSS JOIN race\n    WHERE w.kpi_id='KPI-003'\n      AND w.window_start BETWEEN race.race_start AND race.race_end\n      AND w.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND w.car_id REGEXP '${car:regex}'\n)\nSELECT car_id AS car,\n       ROUND(value,1) AS speed_kmh\nFROM ranked\nWHERE rn=1\nORDER BY speed_kmh DESC",
+          "format": "table"
+        }
+      ],
+      "id": 15
+    },
+    {
+      "type": "barchart",
+      "title": "GAP TO LEADER // CURRENT LAP",
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "xTickLabelSpacing": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\n,ranked AS (\n    SELECT\n        g.car_id,\n        g.lap_number,\n        g.gap_to_leader_ms,\n        g.event_time,\n        g.id,\n        ROW_NUMBER() OVER (\n            PARTITION BY g.car_id\n            ORDER BY g.event_time DESC, g.id DESC\n        ) AS rn\n    FROM gap_trend_results g CROSS JOIN race\n    WHERE g.event_time BETWEEN race.race_start AND race.race_end\n      AND g.lap_number BETWEEN 1 AND 60\n      AND g.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND g.car_id REGEXP '${car:regex}'\n)\nSELECT car_id AS car,\n       lap_number AS lap,\n       ROUND(gap_to_leader_ms/1000.0,2) AS gap_s\nFROM ranked\nWHERE rn=1\nORDER BY gap_s DESC",
+          "format": "table"
+        }
+      ],
+      "id": 16
+    },
+    {
+      "type": "piechart",
+      "title": "ALERT SEVERITY MIX",
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "critical"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EF4444"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warning"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F59E0B"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#36D399"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "none"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#36D399"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": [
+          "name",
+          "value",
+          "percent"
+        ],
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT\n    SUM(CASE WHEN a.severity='critical' THEN 1 ELSE 0 END) AS critical,\n    SUM(CASE WHEN a.severity='warning' THEN 1 ELSE 0 END) AS warning\nFROM alerts a CROSS JOIN race\nWHERE a.created_at BETWEEN\n      DATE_SUB(race.race_end, INTERVAL 10 MINUTE)\n  AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)",
+          "format": "table"
+        }
+      ],
+      "id": 17
     }
   ],
   "refresh": "5s",
