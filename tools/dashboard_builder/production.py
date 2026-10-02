@@ -134,65 +134,33 @@ def table(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8) -> dict
     return p
 
 
-
-def bar(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8,
-        unit: str = "short", decimals: int = 1) -> dict[str, Any]:
+def bar(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8, unit: str = "short", decimals: int = 1) -> dict[str, Any]:
     p = base_panel(title, "barchart", x, y, w, h)
     p["targets"] = [target(sql)]
-    p["fieldConfig"]["defaults"].update({
-        "unit": unit,
-        "decimals": decimals,
-        "custom": {"lineWidth": 1, "fillOpacity": 80},
-    })
-    p["options"] = {
-        "orientation": "horizontal",
-        "showValue": "auto",
-        "legend": {"displayMode": "hidden"},
-        "tooltip": {"mode": "single"},
-    }
+    p["fieldConfig"]["defaults"].update({"unit": unit, "decimals": decimals})
+    p["options"] = {"orientation": "horizontal", "showValue": "auto", "legend": {"displayMode": "hidden"}}
     return p
 
 
-def histogram(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8,
-              unit: str = "short", decimals: int = 1) -> dict[str, Any]:
+def histogram(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8, unit: str = "short", decimals: int = 1) -> dict[str, Any]:
     p = base_panel(title, "histogram", x, y, w, h)
     p["targets"] = [target(sql)]
-    p["fieldConfig"]["defaults"].update({
-        "unit": unit,
-        "decimals": decimals,
-        "custom": {"fillOpacity": 75, "lineWidth": 1},
-    })
-    p["options"] = {
-        "bucketCount": 24,
-        "combine": True,
-        "tooltip": {"mode": "single"},
-        "legend": {"show": False},
-    }
+    p["fieldConfig"]["defaults"].update({"unit": unit, "decimals": decimals})
+    p["options"] = {"bucketCount": 24, "combine": True, "legend": {"show": False}}
     return p
 
 
 def pie(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8) -> dict[str, Any]:
     p = base_panel(title, "piechart", x, y, w, h)
     p["targets"] = [target(sql)]
-    p["options"] = {
-        "pieType": "donut",
-        "displayLabels": ["name", "percent"],
-        "legend": {"displayMode": "table", "placement": "right", "values": ["value", "percent"]},
-        "tooltip": {"mode": "single"},
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
-    }
+    p["options"] = {"pieType": "donut", "displayLabels": ["name", "percent"], "legend": {"displayMode": "table", "placement": "right"}}
     return p
 
 
 def state_timeline(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8) -> dict[str, Any]:
     p = base_panel(title, "state-timeline", x, y, w, h)
     p["targets"] = [target(sql)]
-    p["options"] = {
-        "showValue": "auto",
-        "mergeValues": True,
-        "rowHeight": 0.8,
-        "tooltip": {"mode": "all"},
-    }
+    p["options"] = {"showValue": "auto", "mergeValues": True, "rowHeight": 0.8}
     return p
 
 
@@ -711,26 +679,21 @@ SELECT COALESCE(ROUND(AVG(c.value)*100,2),0) AS value FROM commercial_results c 
 WHERE c.kpi_id='COM-003' AND c.event_time BETWEEN race.race_start AND race.race_end AND c.lap_number BETWEEN 1 AND 60
 """)
 
-
-# Exotic visualization queries — all scoped to the latest 60-lap race.
+# Exotic visualization queries — latest 60-lap race only.
 CURRENT_PACE_RANKING = q(f"""
 {RACE}
 ,ranked AS (
-    SELECT k.car_id,
-           k.lap_time_ms,
+    SELECT k.car_id, k.lap_time_ms,
            MIN(k.lap_time_ms) OVER (PARTITION BY k.car_id) AS best_lap_ms,
            ROW_NUMBER() OVER (PARTITION BY k.car_id ORDER BY k.event_time DESC, k.id DESC) AS rn
     FROM kpi_results k CROSS JOIN race
     WHERE k.event_time BETWEEN race.race_start AND race.race_end
       AND k.lap_number BETWEEN 1 AND 60
       AND k.car_id REGEXP '{CAR_RE}'
-      {car_filter("k")}
+      AND k.car_id REGEXP '${car:regex}'
 )
-SELECT car_id AS car,
-       ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
-FROM ranked
-WHERE rn=1
-ORDER BY pace_delta_s DESC
+SELECT car_id AS car, ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
+FROM ranked WHERE rn=1 ORDER BY pace_delta_s DESC
 """)
 
 PACE_DISTRIBUTION = q(f"""
@@ -740,7 +703,7 @@ FROM kpi_results k CROSS JOIN race
 WHERE k.event_time BETWEEN race.race_start AND race.race_end
   AND k.lap_number BETWEEN 1 AND 60
   AND k.car_id REGEXP '{CAR_RE}'
-  {car_filter("k")}
+  AND k.car_id REGEXP '${car:regex}'
 """)
 
 STRATEGY_RISK_RANKING = q(f"""
@@ -753,59 +716,20 @@ STRATEGY_RISK_RANKING = q(f"""
       AND s.event_time BETWEEN race.race_start AND race.race_end
       AND s.lap_number BETWEEN 1 AND 60
       AND s.car_id REGEXP '{CAR_RE}'
-      {car_filter("s")}
+      AND s.car_id REGEXP '${car:regex}'
 )
-SELECT car_id AS car, ROUND(value,3) AS tyre_risk
-FROM ranked
-WHERE rn=1
-ORDER BY tyre_risk DESC
-""")
-
-GAP_RANKING = q(f"""
-{RACE}
-,ranked AS (
-    SELECT g.car_id, g.gap_to_leader_ms,
-           ROW_NUMBER() OVER (PARTITION BY g.car_id ORDER BY g.event_time DESC, g.id DESC) AS rn
-    FROM gap_trend_results g CROSS JOIN race
-    WHERE g.event_time BETWEEN race.race_start AND race.race_end
-      AND g.lap_number BETWEEN 1 AND 60
-      AND g.car_id REGEXP '{CAR_RE}'
-      {car_filter("g")}
-)
-SELECT car_id AS car, ROUND(gap_to_leader_ms/1000.0,2) AS gap_s
-FROM ranked
-WHERE rn=1
-ORDER BY gap_s DESC
-""")
-
-SPEED_RANKING = q(f"""
-{RACE}
-,ranked AS (
-    SELECT w.car_id, w.value,
-           ROW_NUMBER() OVER (PARTITION BY w.car_id ORDER BY w.window_start DESC, w.id DESC) AS rn
-    FROM windowed_kpi_results w CROSS JOIN race
-    WHERE w.kpi_id='KPI-003'
-      AND w.window_start BETWEEN race.race_start AND race.race_end
-      AND w.car_id REGEXP '{CAR_RE}'
-      {car_filter("w")}
-)
-SELECT car_id AS car, ROUND(value,1) AS avg_speed_kmh
-FROM ranked
-WHERE rn=1
-ORDER BY avg_speed_kmh DESC
+SELECT car_id AS car, ROUND(value,3) AS tyre_risk FROM ranked WHERE rn=1 ORDER BY tyre_risk DESC
 """)
 
 VEHICLE_RISK_STATES = q(f"""
 {RACE}
-SELECT rc.event_time AS time,
-       rc.car_id AS car,
-       rc.severity AS state
+SELECT rc.event_time AS time, rc.car_id AS car, rc.severity AS state
 FROM race_control_results rc CROSS JOIN race
 WHERE rc.kpi_id='RC-002'
   AND rc.event_time BETWEEN race.race_start AND race.race_end
   AND rc.lap_number BETWEEN 1 AND 60
   AND rc.car_id REGEXP '{CAR_RE}'
-  {car_filter("rc")}
+  AND rc.car_id REGEXP '${car:regex}'
 ORDER BY rc.event_time
 """)
 
@@ -815,25 +739,12 @@ SELECT a.severity AS severity, COUNT(*) AS events
 FROM alerts a CROSS JOIN race
 WHERE a.created_at BETWEEN DATE_SUB(race.race_end, INTERVAL 10 MINUTE)
                        AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
-GROUP BY a.severity
-ORDER BY events DESC
-""")
-
-ALERT_SIGNAL_MIX = q(f"""
-{RACE}
-SELECT a.kpi_id AS signal, COUNT(*) AS events
-FROM alerts a CROSS JOIN race
-WHERE a.created_at BETWEEN DATE_SUB(race.race_end, INTERVAL 10 MINUTE)
-                       AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
-GROUP BY a.kpi_id
-ORDER BY events DESC
-LIMIT 10
+GROUP BY a.severity ORDER BY events DESC
 """)
 
 SPONSOR_VISIBILITY_RANKING = q(f"""
 {RACE}
-SELECT c.entity_id AS sponsor,
-       ROUND(SUM(c.value),1) AS visibility_s
+SELECT c.entity_id AS sponsor, ROUND(SUM(c.value),1) AS visibility_s
 FROM commercial_results c CROSS JOIN race
 WHERE c.kpi_id='COM-002'
   AND c.event_time BETWEEN race.race_start AND race.race_end
@@ -947,13 +858,9 @@ def build_operations():
         ts("Gap Trend", GAP, 12, 8, 12, 8, "suffix:s", 2),
         ts("Lap Time Evolution", LAP_TIME, 0, 16, 12, 8, "suffix:s", 2),
         ts("Average Vehicle Speed // 15s", SPEED, 12, 16, 12, 8, "kmh", 1),
-        bar("Current Speed // 12-Car Ranking", SPEED_RANKING, 0, 41, 12, 8, "kmh", 1),
-        pie("Alert Severity Mix // Race Operations", ALERT_SEVERITY_MIX, 12, 41, 12, 8),
         table("12-Car Performance Matrix", CURRENT_CAR_STATUS, 0, 24, 24, 9),
         table("Performance Alert Feed", PERFORMANCE_ALERTS, 0, 33, 12, 8),
         table("Race Control Alert Feed", RACE_CONTROL_FEED, 12, 33, 12, 8),
-        bar("Gap to Leader // Current Lap", GAP_RANKING, 0, 41, 12, 8, "suffix:s", 2),
-        histogram("Lap-Time Distribution // 60 Laps", PACE_DISTRIBUTION, 12, 41, 12, 8, "suffix:s", 1),
     ]
     return dashboard("racepulse-race-operations", "RACEPULSE // Race Operations",
                       "Live performance workstation for race engineering.", panels)
@@ -995,12 +902,9 @@ def build_control():
         stat("Critical Platform Alerts", CRITICAL_ALERTS, 20, 4, CRITICAL),
         ts("Track Risk Timeline", RC_TRACK, 0, 8, 12, 8, "short", 2),
         ts("Vehicle Risk Timeline", RC_VEHICLE, 12, 8, 12, 8, "short", 2),
-        state_timeline("Vehicle Risk States // 60 Laps", VEHICLE_RISK_STATES, 0, 16, 24, 8),
-        table("12-Car Safety Matrix", RACE_CONTROL_MATRIX, 0, 24, 24, 9),
-        table("Race Control Alert Feed", RACE_CONTROL_FEED, 0, 33, 12, 9),
-        table("Executive Alert Context", ALERT_FEED, 12, 33, 12, 9),
-        state_timeline("Vehicle Risk States // 60 Laps", VEHICLE_RISK_STATES, 0, 42, 12, 8),
-        pie("Alert Severity Mix", ALERT_SEVERITY_MIX, 12, 42, 12, 8),
+        table("12-Car Safety Matrix", RACE_CONTROL_MATRIX, 0, 16, 24, 9),
+        table("Race Control Alert Feed", RACE_CONTROL_FEED, 0, 25, 12, 9),
+        table("Executive Alert Context", ALERT_FEED, 12, 25, 12, 9),
         state_timeline("Vehicle Risk States // 60 Laps", VEHICLE_RISK_STATES, 0, 34, 12, 8),
         pie("Alert Severity Mix", ALERT_SEVERITY_MIX, 12, 34, 12, 8),
     ]
@@ -1049,8 +953,6 @@ def build_engineering():
         table("Consumer Health Matrix", HEALTH_MATRIX, 0, 16, 24, 8),
         table("Infrastructure Alert Feed", INFRA_FEED, 0, 24, 12, 9),
         table("Data Quality / DLQ Feed", DATA_QUALITY, 12, 24, 12, 9),
-        pie("Alert Severity Mix // Platform", ALERT_SEVERITY_MIX, 0, 33, 12, 8),
-        bar("Alert Signal Mix // Platform", ALERT_SIGNAL_MIX, 12, 33, 12, 8, "short", 0),
     ]
     return dashboard("racepulse-streaming-engineering", "RACEPULSE // Streaming Engineering",
                       "Streaming platform health, lag, validation and data-quality control room.", panels)
@@ -1090,14 +992,12 @@ if __name__ == "__main__":
 
 
 
-GROUP BY c.entity_id
-ORDER BY visibility_s DESC
+GROUP BY c.entity_id ORDER BY visibility_s DESC
 """)
 
 SPONSOR_CONVERSION_RANKING = q(f"""
 {RACE}
-SELECT c.entity_id AS sponsor,
-       ROUND(AVG(c.value)*100,2) AS conversion_pct
+SELECT c.entity_id AS sponsor, ROUND(AVG(c.value)*100,2) AS conversion_pct
 FROM commercial_results c CROSS JOIN race
 WHERE c.kpi_id='COM-003'
   AND c.event_time BETWEEN race.race_start AND race.race_end
@@ -1337,8 +1237,7 @@ if __name__ == "__main__":
 
 
 
-GROUP BY c.entity_id
-ORDER BY conversion_pct DESC
+GROUP BY c.entity_id ORDER BY conversion_pct DESC
 """)
 
 # Engineering observability is independent of the race session.
