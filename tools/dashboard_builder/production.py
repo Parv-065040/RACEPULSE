@@ -1,4 +1,4 @@
-
+﻿
 from __future__ import annotations
 
 import json
@@ -679,93 +679,7 @@ SELECT COALESCE(ROUND(AVG(c.value)*100,2),0) AS value FROM commercial_results c 
 WHERE c.kpi_id='COM-003' AND c.event_time BETWEEN race.race_start AND race.race_end AND c.lap_number BETWEEN 1 AND 60
 """)
 
-# Exotic visualization queries — latest 60-lap race only.
-CURRENT_PACE_RANKING = q(f"""
-{RACE}
-,ranked AS (
-    SELECT k.car_id, k.lap_time_ms,
-           MIN(k.lap_time_ms) OVER (PARTITION BY k.car_id) AS best_lap_ms,
-           ROW_NUMBER() OVER (PARTITION BY k.car_id ORDER BY k.event_time DESC, k.id DESC) AS rn
-    FROM kpi_results k CROSS JOIN race
-    WHERE k.event_time BETWEEN race.race_start AND race.race_end
-      AND k.lap_number BETWEEN 1 AND 60
-      AND k.car_id REGEXP '{CAR_RE}'
-      AND k.car_id REGEXP '${car:regex}'
-)
-SELECT car_id AS car, ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
-FROM ranked WHERE rn=1 ORDER BY pace_delta_s DESC
-""")
-
-PACE_DISTRIBUTION = q(f"""
-{RACE}
-SELECT ROUND(k.lap_time_ms/1000.0,3) AS lap_time_s
-FROM kpi_results k CROSS JOIN race
-WHERE k.event_time BETWEEN race.race_start AND race.race_end
-  AND k.lap_number BETWEEN 1 AND 60
-  AND k.car_id REGEXP '{CAR_RE}'
-  AND k.car_id REGEXP '${car:regex}'
-""")
-
-STRATEGY_RISK_RANKING = q(f"""
-{RACE}
-,ranked AS (
-    SELECT s.car_id, s.value,
-           ROW_NUMBER() OVER (PARTITION BY s.car_id ORDER BY s.event_time DESC, s.id DESC) AS rn
-    FROM strategy_results s CROSS JOIN race
-    WHERE s.kpi_id='STR-001'
-      AND s.event_time BETWEEN race.race_start AND race.race_end
-      AND s.lap_number BETWEEN 1 AND 60
-      AND s.car_id REGEXP '{CAR_RE}'
-      AND s.car_id REGEXP '${car:regex}'
-)
-SELECT car_id AS car, ROUND(value,3) AS tyre_risk FROM ranked WHERE rn=1 ORDER BY tyre_risk DESC
-""")
-
-VEHICLE_RISK_STATES = q(f"""
-{RACE}
-SELECT rc.event_time AS time, rc.car_id AS car, rc.severity AS state
-FROM race_control_results rc CROSS JOIN race
-WHERE rc.kpi_id='RC-002'
-  AND rc.event_time BETWEEN race.race_start AND race.race_end
-  AND rc.lap_number BETWEEN 1 AND 60
-  AND rc.car_id REGEXP '{CAR_RE}'
-  AND rc.car_id REGEXP '${car:regex}'
-ORDER BY rc.event_time
-""")
-
-ALERT_SEVERITY_MIX = q(f"""
-{RACE}
-SELECT a.severity AS severity, COUNT(*) AS events
-FROM alerts a CROSS JOIN race
-WHERE a.created_at BETWEEN DATE_SUB(race.race_end, INTERVAL 10 MINUTE)
-                       AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
-GROUP BY a.severity ORDER BY events DESC
-""")
-
-SPONSOR_VISIBILITY_RANKING = q(f"""
-{RACE}
-SELECT c.entity_id AS sponsor, ROUND(SUM(c.value),1) AS visibility_s
-FROM commercial_results c CROSS JOIN race
-WHERE c.kpi_id='COM-002'
-  AND c.event_time BETWEEN race.race_start AND race.race_end
-  AND c.lap_number BETWEEN 1 AND 60
-  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
-GROUP BY c.entity_id
-ORDER BY visibility_s DESC
-""")
-
-SPONSOR_CONVERSION_RANKING = q(f"""
-{RACE}
-SELECT c.entity_id AS sponsor, ROUND(AVG(c.value)*100,2) AS conversion_pct
-FROM commercial_results c CROSS JOIN race
-WHERE c.kpi_id='COM-003'
-  AND c.event_time BETWEEN race.race_start AND race.race_end
-  AND c.lap_number BETWEEN 1 AND 60
-  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
-GROUP BY c.entity_id
-ORDER BY conversion_pct DESC
-""")
-
+# Engineering observability is independent of the race session.
 DLQ_COUNT = q("""
 SELECT COUNT(*) AS value FROM dlq_events
 WHERE failed_at >= DATE_SUB((SELECT MAX(failed_at) FROM dlq_events), INTERVAL 30 MINUTE)
@@ -834,7 +748,262 @@ ORDER BY failed_at DESC LIMIT 30
 """)
 
 
-def build_executive():
+# Exotic visualization queries — latest 60-lap race only.
+CURRENT_PACE_RANKING = q(f"""
+{RACE}
+,ranked AS (
+    SELECT k.car_id, k.lap_time_ms,
+           MIN(k.lap_time_ms) OVER (PARTITION BY k.car_id) AS best_lap_ms,
+           ROW_NUMBER() OVER (PARTITION BY k.car_id ORDER BY k.event_time DESC, k.id DESC) AS rn
+    FROM kpi_results k CROSS JOIN race
+    WHERE k.event_time BETWEEN race.race_start AND race.race_end
+      AND k.lap_number BETWEEN 1 AND 60
+      AND k.car_id REGEXP '{CAR_RE}'
+      AND k.car_id REGEXP '${car:regex}'
+)
+SELECT car_id AS car, ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
+FROM ranked WHERE rn=1 ORDER BY pace_delta_s DESC
+""")
+
+PACE_DISTRIBUTION = q(f"""
+{RACE}
+SELECT ROUND(k.lap_time_ms/1000.0,3) AS lap_time_s
+FROM kpi_results k CROSS JOIN race
+WHERE k.event_time BETWEEN race.race_start AND race.race_end
+  AND k.lap_number BETWEEN 1 AND 60
+  AND k.car_id REGEXP '{CAR_RE}'
+  AND k.car_id REGEXP '${car:regex}'
+""")
+
+STRATEGY_RISK_RANKING = q(f"""
+{RACE}
+,ranked AS (
+    SELECT s.car_id, s.value,
+           ROW_NUMBER() OVER (PARTITION BY s.car_id ORDER BY s.event_time DESC, s.id DESC) AS rn
+    FROM strategy_results s CROSS JOIN race
+    WHERE s.kpi_id='STR-001'
+      AND s.event_time BETWEEN race.race_start AND race.race_end
+      AND s.lap_number BETWEEN 1 AND 60
+      AND s.car_id REGEXP '{CAR_RE}'
+      AND s.car_id REGEXP '${car:regex}'
+)
+SELECT car_id AS car, ROUND(value,3) AS tyre_risk
+FROM ranked WHERE rn=1 ORDER BY tyre_risk DESC
+""")
+
+VEHICLE_RISK_STATES = q(f"""
+{RACE}
+SELECT rc.event_time AS time, rc.car_id AS car, rc.severity AS state
+FROM race_control_results rc CROSS JOIN race
+WHERE rc.kpi_id='RC-002'
+  AND rc.event_time BETWEEN race.race_start AND race.race_end
+  AND rc.lap_number BETWEEN 1 AND 60
+  AND rc.car_id REGEXP '{CAR_RE}'
+  AND rc.car_id REGEXP '${car:regex}'
+ORDER BY rc.event_time
+""")
+
+ALERT_SEVERITY_MIX = q(f"""
+{RACE}
+SELECT a.severity AS severity, COUNT(*) AS events
+FROM alerts a CROSS JOIN race
+WHERE a.created_at BETWEEN DATE_SUB(race.race_end, INTERVAL 10 MINUTE)
+                       AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
+GROUP BY a.severity ORDER BY events DESC
+""")
+
+SPONSOR_VISIBILITY_RANKING = q(f"""
+{RACE}
+SELECT c.entity_id AS sponsor, ROUND(SUM(c.value),1) AS visibility_s
+FROM commercial_results c CROSS JOIN race
+WHERE c.kpi_id='COM-002'
+  AND c.event_time BETWEEN race.race_start AND race.race_end
+  AND c.lap_number BETWEEN 1 AND 60
+  AND c.entity_id REGEXP '^SPONSOR_[0-9]+
+    panels = [
+        text("RACEPULSE // CEO COMMAND CENTER",
+             "**LIVE RACE INTELLIGENCE**  \nStreaming telemetry | strategy | race control | commercial intelligence  \n`SENSE -> STREAM -> ANALYZE -> ALERT -> DECIDE`",
+             0, 0, 24, 4),
+        stat("Current Lap", LATEST_LAP, 0, 4, TELEMETRY),
+        stat("Critical Alerts", CRITICAL_ALERTS, 4, 4, CRITICAL),
+        stat("Strategy Signals", STRATEGY_SIGNALS, 8, 4, STRATEGY),
+        stat("Commercial Events", COMMERCIAL_EVENTS, 12, 4, COMMERCIAL),
+        stat("Cars Reporting", CARS_REPORTING, 16, 4, NORMAL),
+        stat("Windowed KPIs", WINDOWED_KPIS, 20, 4, TELEMETRY),
+        ts("Race Pace // Pace Delta", PACE, 0, 8, 12, 9, "suffix:s", 2),
+        ts("Race Pace // Gap Trend", GAP, 12, 8, 12, 9, "suffix:s", 2),
+        ts("Strategic Exposure // Tyre Risk", STRATEGY_RISK, 0, 17, 12, 8, "short", 2),
+        ts("Commercial Momentum // Engagement", COMM_ENGAGEMENT, 12, 17, 12, 8, "percent", 2),
+        table("12-Car Executive Status", CURRENT_CAR_STATUS, 0, 25, 24, 9),
+        table("Executive Alert Feed", ALERT_FEED, 0, 34, 12, 8),
+        table("Strategy Decision Feed", STRATEGY_FEED, 12, 34, 12, 8),
+    ]
+    return dashboard("racepulse-ceo-command-center", "RACEPULSE // CEO Command Center",
+                      "Executive command center for live race, strategy, commercial and risk intelligence.", panels)
+
+
+def build_operations():
+    panels = [
+        text("RACE OPERATIONS // LIVE PERFORMANCE",
+             "**RACE ENGINEERING WORKSTATION**  \nPerformance | pace | gap | speed | race-control signals",
+             0, 0, 24, 4),
+        stat("Current Lap", LATEST_LAP, 0, 4, TELEMETRY),
+        stat("Active Cars", CARS_REPORTING, 4, 4, NORMAL),
+        stat("Critical Alerts", CRITICAL_ALERTS, 8, 4, CRITICAL),
+        stat("Track Risk Signals", TRACK_RISK_SIGNALS, 12, 4, WARNING),
+        stat("Vehicle Risk Signals", VEHICLE_RISK_SIGNALS, 16, 4, WARNING),
+        stat("Max Gap Trend", q(f"""{RACE} SELECT COALESCE(ROUND(MAX(ABS(g.trend_ms_per_lap))/1000.0,2),0) AS value FROM gap_trend_results g CROSS JOIN race WHERE g.event_time BETWEEN race.race_start AND race.race_end AND g.lap_number BETWEEN 1 AND 60"""), 20, 4, TELEMETRY, "suffix:s"),
+        ts("Live Pace Delta", PACE, 0, 8, 12, 8, "suffix:s", 2),
+        ts("Gap Trend", GAP, 12, 8, 12, 8, "suffix:s", 2),
+        ts("Lap Time Evolution", LAP_TIME, 0, 16, 12, 8, "suffix:s", 2),
+        ts("Average Vehicle Speed // 15s", SPEED, 12, 16, 12, 8, "kmh", 1),
+        table("12-Car Performance Matrix", CURRENT_CAR_STATUS, 0, 24, 24, 9),
+        table("Performance Alert Feed", PERFORMANCE_ALERTS, 0, 33, 12, 8),
+        table("Race Control Alert Feed", RACE_CONTROL_FEED, 12, 33, 12, 8),
+    ]
+    return dashboard("racepulse-race-operations", "RACEPULSE // Race Operations",
+                      "Live performance workstation for race engineering.", panels)
+
+
+def build_strategy():
+    panels = [
+        text("STRATEGY INTELLIGENCE",
+             "**STRATEGIST WORKSTATION**  \nTyre degradation | pit-window signals | strategic exposure",
+             0, 0, 24, 4),
+        stat("Critical Signals", STRATEGY_CRITICAL, 0, 4, CRITICAL),
+        stat("Warning Signals", STRATEGY_WARNING, 4, 4, WARNING),
+        stat("Pit-Window Signals", PIT_SIGNALS, 8, 4, STRATEGY),
+        stat("Highest Tyre Risk", MAX_TYRE_RISK, 12, 4, CRITICAL),
+        stat("Cars Reporting", CARS_REPORTING, 16, 4, NORMAL),
+        stat("Current Lap", LATEST_LAP, 20, 4, TELEMETRY),
+        ts("Tyre Degradation Risk", STRATEGY_RISK, 0, 8, 12, 8, "short", 2),
+        ts("Pit-Window Signal", PIT_WINDOW, 12, 8, 12, 8, "short", 2),
+        table("12-Car Strategy Matrix", STRATEGY_MATRIX, 0, 16, 24, 9),
+        table("Strategy Decision Feed", STRATEGY_FEED, 0, 25, 12, 9),
+        bar("Current Pace Delta // 12-Car Ranking", CURRENT_PACE_RANKING, 0, 34, 12, 8, "suffix:s", 2),
+        histogram("Lap-Time Distribution // 60 Laps", PACE_DISTRIBUTION, 12, 34, 12, 8, "suffix:s", 1),
+        bar("Tyre Risk // Current Lap", STRATEGY_RISK_RANKING, 0, 34, 12, 8, "short", 2),
+        state_timeline("Vehicle Risk States // 60 Laps", VEHICLE_RISK_STATES, 12, 34, 12, 8),
+        table("Current Race Performance Context", CURRENT_CAR_STATUS, 12, 25, 12, 9),
+    ]
+    return dashboard("racepulse-strategy", "RACEPULSE // Strategy Intelligence",
+                      "Strategy workstation for tyre risk and pit-window intelligence.", panels)
+
+
+def build_control():
+    panels = [
+        text("RACE CONTROL // SAFETY & INCIDENTS",
+             "**CONTROL ROOM**  \nTrack risk | vehicle risk | operational alerts",
+             0, 0, 24, 4),
+        stat("Critical Control Signals", RC_CRITICAL, 0, 4, CRITICAL),
+        stat("Track Risk Signals", TRACK_RISK_SIGNALS, 4, 4, WARNING),
+        stat("Vehicle Risk Signals", VEHICLE_RISK_SIGNALS, 8, 4, WARNING),
+        stat("Active Cars", CARS_REPORTING, 12, 4, NORMAL),
+        stat("Current Lap", LATEST_LAP, 16, 4, TELEMETRY),
+        stat("Critical Platform Alerts", CRITICAL_ALERTS, 20, 4, CRITICAL),
+        ts("Track Risk Timeline", RC_TRACK, 0, 8, 12, 8, "short", 2),
+        ts("Vehicle Risk Timeline", RC_VEHICLE, 12, 8, 12, 8, "short", 2),
+        table("12-Car Safety Matrix", RACE_CONTROL_MATRIX, 0, 16, 24, 9),
+        table("Race Control Alert Feed", RACE_CONTROL_FEED, 0, 25, 12, 9),
+        table("Executive Alert Context", ALERT_FEED, 12, 25, 12, 9),
+        state_timeline("Vehicle Risk States // 60 Laps", VEHICLE_RISK_STATES, 0, 34, 12, 8),
+        pie("Alert Severity Mix", ALERT_SEVERITY_MIX, 12, 34, 12, 8),
+    ]
+    return dashboard("racepulse-race-control", "RACEPULSE // Race Control",
+                      "Race-control and safety intelligence workstation.", panels)
+
+
+def build_commercial():
+    panels = [
+        text("COMMERCIAL INTELLIGENCE",
+             "**SPORTS BUSINESS WORKSTATION**  \nFan engagement | sponsor visibility | conversion | commercial momentum",
+             0, 0, 24, 4),
+        stat("Avg Engagement", COMM_ENGAGEMENT_AVG, 0, 4, COMMERCIAL, "percent"),
+        stat("Sponsor Visibility", COMM_VISIBILITY, 4, 4, COMMERCIAL, "suffix:s"),
+        stat("Avg Conversion", COMM_CONVERSION_AVG, 8, 4, COMMERCIAL, "percent"),
+        stat("Commercial Events", COMMERCIAL_EVENTS, 12, 4, COMMERCIAL),
+        stat("Active Cars", CARS_REPORTING, 16, 4, NORMAL),
+        stat("Current Lap", LATEST_LAP, 20, 4, TELEMETRY),
+        ts("Fan Engagement Trend", COMM_ENGAGEMENT, 0, 8, 12, 8, "percent", 2),
+        ts("Sponsor Visibility", SPONSOR_VISIBILITY, 12, 8, 12, 8, "suffix:s", 1),
+        ts("Sponsor Conversion", COMM_CONVERSION, 0, 16, 12, 8, "percent", 2),
+        ts("Average Speed // Commercial Context", SPEED, 12, 16, 12, 8, "kmh", 1),
+        table("Sponsor Scorecard", COMMERCIAL_SCORECARD, 0, 24, 24, 8),
+        table("Commercial Activity Feed", COMMERCIAL_FEED, 0, 32, 12, 9),
+        table("Commercial Signal Context", COMMERCIAL_FEED, 12, 32, 12, 9),
+        bar("Sponsor Visibility // 60-Lap Total", SPONSOR_VISIBILITY_RANKING, 0, 41, 12, 8, "suffix:s", 1),
+        bar("Sponsor Conversion // 60-Lap Average", SPONSOR_CONVERSION_RANKING, 12, 41, 12, 8, "percent", 2),
+    ]
+    return dashboard("racepulse-commercial", "RACEPULSE // Commercial Intelligence",
+                      "Commercial intelligence for fan and sponsor performance.", panels)
+
+
+def build_engineering():
+    panels = [
+        text("STREAMING ENGINEERING // MISSION CONTROL",
+             "**PLATFORM HEALTH**  \nKafka | consumers | validation | DLQ | stale-stream monitoring",
+             0, 0, 24, 4),
+        stat("Max Consumer Lag", STREAM_LAG_MAX, 0, 4, NORMAL),
+        stat("DLQ Events", DLQ_COUNT, 4, 4, CRITICAL),
+        stat("Stale Stream Alerts", STALE_COUNT, 8, 4, WARNING),
+        stat("Critical Infra Alerts", INFRA_CRITICAL, 12, 4, CRITICAL),
+        stat("Active Cars", CARS_REPORTING, 16, 4, NORMAL),
+        stat("Current Lap", LATEST_LAP, 20, 4, TELEMETRY),
+        ts("Consumer Lag", LAG_TIMELINE, 0, 8, 12, 8, "short", 0),
+        ts("DLQ Activity", DLQ_TIMELINE, 12, 8, 12, 8, "short", 0),
+        table("Consumer Health Matrix", HEALTH_MATRIX, 0, 16, 24, 8),
+        table("Infrastructure Alert Feed", INFRA_FEED, 0, 24, 12, 9),
+        table("Data Quality / DLQ Feed", DATA_QUALITY, 12, 24, 12, 9),
+    ]
+    return dashboard("racepulse-streaming-engineering", "RACEPULSE // Streaming Engineering",
+                      "Streaming platform health, lag, validation and data-quality control room.", panels)
+
+
+DASHBOARDS = [
+    build_executive,
+    build_operations,
+    build_strategy,
+    build_control,
+    build_commercial,
+    build_engineering,
+]
+
+
+def build_all() -> list[Path]:
+    OUT.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for builder in DASHBOARDS:
+        d = builder()
+        path = OUT / f"{d['uid']}.json"
+        path.write_text(json.dumps(d, indent=2) + "\n", encoding="utf-8")
+        written.append(path)
+        print(f"[OK] {d['title']}: {len(d['panels'])} panels")
+        json.loads(path.read_text(encoding="utf-8"))
+    return written
+
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("RACEPULSE PRODUCTION DASHBOARD BUILDER")
+    print("=" * 70)
+    build_all()
+    print("=" * 70)
+    print("All production dashboards generated.")
+    print("=" * 70)
+
+
+
+GROUP BY c.entity_id ORDER BY visibility_s DESC
+""")
+
+SPONSOR_CONVERSION_RANKING = q(f"""
+{RACE}
+SELECT c.entity_id AS sponsor, ROUND(AVG(c.value)*100,2) AS conversion_pct
+FROM commercial_results c CROSS JOIN race
+WHERE c.kpi_id='COM-003'
+  AND c.event_time BETWEEN race.race_start AND race.race_end
+  AND c.lap_number BETWEEN 1 AND 60
+  AND c.entity_id REGEXP '^SPONSOR_[0-9]+
     panels = [
         text("RACEPULSE // CEO COMMAND CENTER",
              "**LIVE RACE INTELLIGENCE**  \nStreaming telemetry | strategy | race control | commercial intelligence  \n`SENSE -> STREAM -> ANALYZE -> ALERT -> DECIDE`",
@@ -1002,75 +1171,6 @@ if __name__ == "__main__":
 
 GROUP BY c.entity_id ORDER BY conversion_pct DESC
 """)
-
-# Engineering observability is independent of the race session.
-DLQ_COUNT = q("""
-SELECT COUNT(*) AS value FROM dlq_events
-WHERE failed_at >= DATE_SUB((SELECT MAX(failed_at) FROM dlq_events), INTERVAL 30 MINUTE)
-""")
-STALE_COUNT = q(f"""
-{RACE}
-SELECT COUNT(*) AS value FROM alerts a CROSS JOIN race
-WHERE a.kpi_id='SYS-STALE'
-  AND a.created_at BETWEEN DATE_SUB(race.race_end, INTERVAL 10 MINUTE) AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)
-""")
-INFRA_CRITICAL = q("""
-SELECT COUNT(*) AS value
-FROM infra_alerts
-WHERE severity = 'critical'
-  AND observed_at >= DATE_SUB(
-      (SELECT COALESCE(MAX(observed_at), CURRENT_TIMESTAMP) FROM infra_alerts),
-      INTERVAL 30 MINUTE
-  )
-""")
-# These tables are currently empty. Return an intentional empty result rather than inventing health data.
-STREAM_LAG_MAX = q("SELECT NULL AS value WHERE 1=0")
-
-LAG_TIMELINE = q("""
-SELECT created_at AS time,
-       COUNT(*) AS alert_events
-FROM alerts
-WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)
-GROUP BY created_at
-ORDER BY created_at
-""")
-
-HEALTH_MATRIX = q("""
-SELECT
-    'Alert Pipeline' AS consumer,
-    COUNT(*) AS events_seen,
-    SUM(CASE WHEN severity='critical' THEN 1 ELSE 0 END) AS critical_events,
-    SUM(CASE WHEN severity='warning' THEN 1 ELSE 0 END) AS warning_events,
-    MAX(created_at) AS last_event,
-    'ACTIVE' AS status
-FROM alerts
-WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)
-""")
-
-INFRA_FEED = q("""
-SELECT created_at AS time,
-       kpi_id AS `signal`,
-       severity AS status,
-       'Alert Monitor' AS component,
-       message
-FROM alerts
-WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)
-ORDER BY created_at DESC
-LIMIT 20
-""")
-DLQ_TIMELINE = q("""
-SELECT failed_at AS time, source_topic, COUNT(*) AS dlq_events
-FROM dlq_events
-WHERE failed_at >= DATE_SUB((SELECT MAX(failed_at) FROM dlq_events), INTERVAL 30 MINUTE)
-GROUP BY failed_at, source_topic ORDER BY failed_at
-""")
-DATA_QUALITY = q("""
-SELECT failed_at AS time, source_topic AS topic, raw_key, errors
-FROM dlq_events
-WHERE failed_at >= DATE_SUB((SELECT MAX(failed_at) FROM dlq_events), INTERVAL 30 MINUTE)
-ORDER BY failed_at DESC LIMIT 30
-""")
-
 
 def build_executive():
     panels = [
