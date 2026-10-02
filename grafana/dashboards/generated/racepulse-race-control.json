@@ -1,0 +1,830 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "RACE CONTROL // SAFETY & INCIDENTS",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**CONTROL ROOM**  \nTrack risk | vehicle risk | operational alerts"
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "CRITICAL CONTROL SIGNALS",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#EF4444"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(*) AS value FROM race_control_results rc CROSS JOIN race\nWHERE rc.severity='critical' AND rc.event_time BETWEEN race.race_start AND race.race_end AND rc.lap_number BETWEEN 1 AND 60",
+          "format": "table"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "TRACK RISK SIGNALS",
+      "gridPos": {
+        "x": 4,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F59E0B"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(*) AS value FROM race_control_results rc CROSS JOIN race\nWHERE rc.kpi_id='RC-001' AND rc.severity<>'none' AND rc.event_time BETWEEN race.race_start AND race.race_end AND rc.lap_number BETWEEN 1 AND 60",
+          "format": "table"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "VEHICLE RISK SIGNALS",
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F59E0B"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(*) AS value FROM race_control_results rc CROSS JOIN race\nWHERE rc.kpi_id='RC-002' AND rc.severity<>'none' AND rc.event_time BETWEEN race.race_start AND race.race_end AND rc.lap_number BETWEEN 1 AND 60",
+          "format": "table"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "ACTIVE CARS",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#36D399"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(DISTINCT k.car_id) AS value FROM kpi_results k CROSS JOIN race\nWHERE k.event_time BETWEEN race.race_start AND race.race_end\n  AND k.lap_number BETWEEN 1 AND 60\n  AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "CURRENT LAP",
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(\n    (\n        SELECT k.lap_number\n        FROM kpi_results k\n        WHERE k.event_time = (\n            SELECT MAX(k2.event_time)\n            FROM kpi_results k2\n            WHERE k2.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n        )\n        AND k.lap_number BETWEEN 1 AND 60\n        LIMIT 1\n    ),\n    0\n) AS value",
+          "format": "table"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "CRITICAL PLATFORM ALERTS",
+      "gridPos": {
+        "x": 20,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#EF4444"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(*) AS value FROM alerts a CROSS JOIN race\nWHERE a.severity='critical'\n  AND a.created_at BETWEEN DATE_SUB(race.race_end, INTERVAL 10 MINUTE)\n                       AND DATE_ADD(race.race_end, INTERVAL 10 MINUTE)",
+          "format": "table"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "TRACK RISK TIMELINE",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT rc.event_time AS time, rc.car_id, ROUND(rc.value,3) AS track_risk\nFROM race_control_results rc CROSS JOIN race\nWHERE rc.kpi_id='RC-001' AND rc.event_time BETWEEN race.race_start AND race.race_end AND rc.lap_number BETWEEN 1 AND 60\nORDER BY rc.event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "VEHICLE RISK TIMELINE",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT rc.event_time AS time, rc.car_id, ROUND(rc.value,3) AS vehicle_risk\nFROM race_control_results rc CROSS JOIN race\nWHERE rc.kpi_id='RC-002' AND rc.event_time BETWEEN race.race_start AND race.race_end AND rc.lap_number BETWEEN 1 AND 60\nORDER BY rc.event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 9
+    },
+    {
+      "type": "table",
+      "title": "12-CAR SAFETY MATRIX",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n, ranked AS (\n    SELECT rc.*,\n           ROW_NUMBER() OVER (PARTITION BY rc.car_id, rc.kpi_id ORDER BY rc.event_time DESC, rc.id DESC) AS rn\n    FROM race_control_results rc CROSS JOIN race\n    WHERE rc.event_time BETWEEN race.race_start AND race.race_end\n      AND rc.lap_number BETWEEN 1 AND 60\n      AND rc.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n)\nSELECT car_id AS car,\n       MAX(CASE WHEN kpi_id='RC-001' THEN ROUND(value,2) END) AS track_risk,\n       MAX(CASE WHEN kpi_id='RC-002' THEN ROUND(value,2) END) AS vehicle_risk,\n       MAX(CASE WHEN kpi_id='RC-001' THEN severity END) AS track_status,\n       MAX(CASE WHEN kpi_id='RC-002' THEN severity END) AS vehicle_status,\n       MAX(lap_number) AS lap\nFROM ranked WHERE rn=1\nGROUP BY car_id ORDER BY car_id",
+          "format": "table"
+        }
+      ],
+      "id": 10
+    },
+    {
+      "type": "table",
+      "title": "RACE CONTROL ALERT FEED",
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT rc.event_time AS time,\n       rc.car_id AS car,\n       CASE rc.kpi_id\n           WHEN 'RC-001' THEN 'TRACK RISK'\n           WHEN 'RC-002' THEN 'VEHICLE RISK'\n           ELSE rc.kpi_id\n       END AS signal,\n       ROUND(rc.value,2) AS value,\n       rc.severity AS status,\n       rc.message\nFROM race_control_results rc\nWHERE rc.severity <> 'none'\n  AND rc.event_time BETWEEN\n      DATE_SUB(\n          (SELECT MAX(k.event_time)\n           FROM kpi_results k\n           WHERE k.lap_number BETWEEN 1 AND 60\n             AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'),\n          INTERVAL 10 MINUTE\n      )\n  AND (SELECT MAX(k.event_time)\n       FROM kpi_results k\n       WHERE k.lap_number BETWEEN 1 AND 60\n         AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$')\n  AND rc.lap_number BETWEEN 1 AND 60\nORDER BY rc.event_time DESC\nLIMIT 20",
+          "format": "table"
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "table",
+      "title": "EXECUTIVE ALERT CONTEXT",
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT a.created_at AS time,\n       a.car_id AS car,\n       a.kpi_id AS signal,\n       a.severity AS status,\n       a.message\nFROM alerts a\nWHERE a.created_at BETWEEN\n      DATE_SUB(\n          (SELECT MAX(k.event_time)\n           FROM kpi_results k\n           WHERE k.lap_number BETWEEN 1 AND 60\n             AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'),\n          INTERVAL 10 MINUTE\n      )\n  AND DATE_ADD(\n          (SELECT MAX(k.event_time)\n           FROM kpi_results k\n           WHERE k.lap_number BETWEEN 1 AND 60\n             AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'),\n          INTERVAL 10 MINUTE\n      )\nORDER BY a.created_at DESC\nLIMIT 20",
+          "format": "table"
+        }
+      ],
+      "id": 12
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE",
+    "streaming",
+    "motorsport"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "RACEPULSE // Race Control",
+  "uid": "racepulse-race-control",
+  "version": 2,
+  "description": "Race-control and safety intelligence workstation."
+}

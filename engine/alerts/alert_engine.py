@@ -1,3 +1,4 @@
+﻿import os
 """Alert generation with lazy Kafka/MySQL dependencies."""
 import json
 import uuid
@@ -12,7 +13,7 @@ def _get_producer():
     global _producer
     if _producer is None:
         _producer=KafkaProducer(
-            bootstrap_servers="localhost:9092",
+            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
             key_serializer=lambda k:k,
             value_serializer=lambda v:json.dumps(v).encode("utf-8"),
         )
@@ -57,3 +58,4 @@ def raise_stale_stream_alert(car_id,seconds_since_last_seen):
     message=f"Car {car_id} stream is STALE - no data for {seconds_since_last_seen:.1f}s"
     _publish_and_store("SYS-STALE",event_id,car_id,"critical",message,
                        int(seconds_since_last_seen*1000),now_iso)
+

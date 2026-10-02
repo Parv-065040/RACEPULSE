@@ -1,9 +1,10 @@
+﻿import os
 """Kafka consumer lag and MySQL health monitor."""
 import time
 from kafka import KafkaAdminClient, KafkaConsumer
 from database.connection import get_connection
 
-BOOTSTRAP="localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 GROUPS=["performance-consumer","strategy-consumer","race-control-consumer","commercial-consumer"]
 LAG_WARNING=100
 
@@ -51,3 +52,4 @@ def run(interval=5):
         time.sleep(interval)
 
 if __name__=="__main__": run()
+

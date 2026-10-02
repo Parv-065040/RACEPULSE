@@ -1,4 +1,5 @@
-﻿"""Dead-letter queue publisher with a best-effort MySQL audit record."""
+﻿import os
+"""Dead-letter queue publisher with a best-effort MySQL audit record."""
 import json
 from datetime import datetime, timezone
 
@@ -76,7 +77,7 @@ def _get_producer():
 
     if _producer is None:
         _producer = KafkaProducer(
-            bootstrap_servers="localhost:9092",
+            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
             value_serializer=lambda v: json.dumps(
                 v,
                 ensure_ascii=False,
@@ -127,3 +128,4 @@ def send_to_dlq(source_topic, raw_key, raw_value, errors):
             f"(Kafka DLQ already published): {exc}",
             flush=True,
         )
+

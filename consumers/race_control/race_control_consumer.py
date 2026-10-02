@@ -1,10 +1,11 @@
-"""
+﻿"""
 Race-control consumer for telemetry, timing, weather and incident streams.
 
 Mechanical-failure incidents mark a car retired; retired cars are excluded
 from risk calculations and are explicitly exposed to the stale monitor.
 """
-from __future__ import annotations
+from __future__ import annotations
+import os
 import json
 import uuid
 from datetime import datetime
@@ -14,7 +15,7 @@ from engine.validation.gate import ValidationGate
 from engine.alerts.stale_stream_monitor import mark_retired, mark_seen
 from engine.config.loader import get_config, start_config_watcher
 
-BOOTSTRAP="localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPICS=["race.telemetry","race.timing","race.weather","race.incidents"]
 GROUP_ID="race-control-consumer"
 STATE: dict[str,dict] = {}
@@ -89,4 +90,6 @@ def run():
         consumer.close(); producer.close()
 
 if __name__=="__main__": run()
+
+
 

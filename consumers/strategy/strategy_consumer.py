@@ -1,7 +1,8 @@
-"""
+﻿"""
 Strategy analytics consumer for tyres, weather, timing and pit-stop streams.
 """
-from __future__ import annotations
+from __future__ import annotations
+import os
 import json
 import uuid
 from datetime import datetime
@@ -10,7 +11,7 @@ from database.connection import get_connection
 from engine.validation.gate import ValidationGate
 from engine.config.loader import get_config, start_config_watcher
 
-BOOTSTRAP = "localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPICS = ["race.timing", "race.tyres", "race.weather", "race.pitstops"]
 GROUP_ID = "strategy-consumer"
 STATE: dict[str, dict] = {}
@@ -37,10 +38,12 @@ def compute_signals(state: dict) -> list[dict]:
     pit = state.get("pitstops") or {}
     best = state.get("best_lap_time_ms", timing["lap_time_ms"])
     pace_delta_s = max(0.0, (timing["lap_time_ms"] - best) / 1000.0)
+    best_lap_s = max(best / 1000.0, 1.0)
+    pace_delta_ratio = pace_delta_s / best_lap_s
     grip_loss = max(0.0, 1.0 - float(tyres["grip"]))
     degradation = float(tyres["degradation_per_lap"])
     wetness = float(weather.get("track_wetness", 0.0))
-    risk = degradation * 5.0 + grip_loss * 2.0 + pace_delta_s * 0.4 + wetness * 0.5
+    risk = degradation * 5.0 + grip_loss * 2.0 + pace_delta_ratio * 0.4 + wetness * 0.5
     pit_signal = min(1.0, risk / 2.0 + (0.5 if pit.get("pit_stop") else 0.0))
     cfg=get_config().get("strategy", {"tyre_risk":{"warning":0.75,"critical":1.50},"pit_window":{"warning":0.60,"critical":0.85}})
     return [
@@ -97,3 +100,6 @@ def run() -> None:
         consumer.close(); alert_producer.close()
 
 if __name__ == "__main__": run()
+
+
+

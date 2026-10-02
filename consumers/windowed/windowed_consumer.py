@@ -9,7 +9,8 @@ Kafka -> ValidationGate -> TumblingWindow -> Watermark/Idle Flush
       -> KPI -> MySQL
 """
 
-from __future__ import annotations
+from __future__ import annotations
+import os
 
 import hashlib
 import time
@@ -29,7 +30,7 @@ from engine.validation.gate import ValidationGate
 from engine.windows.tumbling_window import TumblingWindow
 
 
-BOOTSTRAP = "localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPIC = "race.telemetry"
 GROUP_ID = "windowed-performance-consumer"
 
@@ -319,3 +320,4 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
+

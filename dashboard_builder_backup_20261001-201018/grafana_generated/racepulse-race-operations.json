@@ -1,0 +1,1000 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "RACE OPERATIONS // LIVE PERFORMANCE",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**RACE ENGINEERING WORKSTATION**  \nPerformance \u00e2\u20ac\u00a2 pace \u00e2\u20ac\u00a2 gap \u00e2\u20ac\u00a2 speed \u00e2\u20ac\u00a2 race-control signals"
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "CURRENT LAP",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(MAX(lap_number),0) AS value\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "ACTIVE CARS",
+      "gridPos": {
+        "x": 4,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#36D399"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(DISTINCT car_id) AS value\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "CRITICAL ALERTS",
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#EF4444"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM alerts\nWHERE severity='critical'\n  AND $__timeFilter(created_at)",
+          "format": "table"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "TRACK RISK SIGNALS",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F59E0B"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM race_control_results\nWHERE kpi_id='RC-001' AND severity<>'none' AND $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "VEHICLE RISK SIGNALS",
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F59E0B"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM race_control_results\nWHERE kpi_id='RC-002' AND severity<>'none' AND $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "MAX GAP TREND",
+      "gridPos": {
+        "x": 20,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(ROUND(MAX(ABS(trend_ms_per_lap))/1000.0,2),0) AS value FROM gap_trend_results WHERE $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "LIVE PACE DELTA",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time, car_id,\n       ROUND(delta_ms/1000.0,3) AS pace_delta_s\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "GAP TREND",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time, car_id,\n       ROUND(trend_ms_per_lap/1000.0,3) AS gap_trend_s_per_lap\nFROM gap_trend_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "LAP TIME EVOLUTION",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time, car_id,\n       ROUND(lap_time_ms/1000.0,3) AS lap_time_s\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "AVERAGE VEHICLE SPEED // 15S",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "kmh",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT window_start AS time, car_id,\n       ROUND(value,1) AS avg_speed_kmh\nFROM windowed_kpi_results\nWHERE kpi_id='KPI-003'\n  AND $__timeFilter(window_start)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY window_start",
+          "format": "time_series"
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "table",
+      "title": "12-CAR PERFORMANCE MATRIX",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT\n    kr.car_id AS car,\n    kr.lap_number AS lap,\n    ROUND(kr.lap_time_ms/1000.0,3) AS lap_time_s,\n    ROUND(kr.best_lap_time_ms/1000.0,3) AS best_lap_s,\n    ROUND(kr.delta_ms/1000.0,3) AS pace_delta_s,\n    kr.severity AS pace_status,\n    ROUND(COALESCE(gt.gap_to_leader_ms,0)/1000.0,3) AS gap_s,\n    ROUND(COALESCE(gt.trend_ms_per_lap,0)/1000.0,3) AS gap_trend_s_per_lap,\n    COALESCE(gt.severity,'none') AS gap_status\nFROM kpi_results kr\nINNER JOIN (\n    SELECT car_id, MAX(id) AS latest_id\n    FROM kpi_results\n    WHERE $__timeFilter(event_time)\n      AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n    GROUP BY car_id\n) latest\n  ON latest.car_id=kr.car_id AND latest.latest_id=kr.id\nLEFT JOIN gap_trend_results gt\n  ON gt.car_id=kr.car_id AND gt.lap_number=kr.lap_number\n AND gt.id=(\n    SELECT MAX(g2.id)\n    FROM gap_trend_results g2\n    WHERE g2.car_id=kr.car_id\n      AND g2.lap_number=kr.lap_number\n      AND $__timeFilter(g2.event_time)\n )\nORDER BY kr.car_id",
+          "format": "table"
+        }
+      ],
+      "id": 12
+    },
+    {
+      "type": "table",
+      "title": "PERFORMANCE ALERT FEED",
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time,\n       car_id AS car,\n       kpi_id AS signal,\n       ROUND(delta_ms/1000.0,2) AS pace_delta_s,\n       severity AS status\nFROM kpi_results\nWHERE severity <> 'none'\n  AND $__timeFilter(event_time)\nORDER BY event_time DESC\nLIMIT 20",
+          "format": "table"
+        }
+      ],
+      "id": 13
+    },
+    {
+      "type": "table",
+      "title": "RACE CONTROL ALERT FEED",
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time,\n       car_id AS car,\n       CASE kpi_id\n         WHEN 'RC-001' THEN 'TRACK RISK'\n         WHEN 'RC-002' THEN 'VEHICLE RISK'\n         ELSE kpi_id\n       END AS signal,\n       ROUND(value,2) AS value,\n       severity AS status,\n       message\nFROM race_control_results\nWHERE severity <> 'none'\n  AND $__timeFilter(event_time)\nORDER BY event_time DESC\nLIMIT 20",
+          "format": "table"
+        }
+      ],
+      "id": 14
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE",
+    "streaming",
+    "motorsport"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "RACEPULSE // Race Operations",
+  "uid": "racepulse-race-operations",
+  "version": 1,
+  "description": "Live performance workstation for race engineering."
+}

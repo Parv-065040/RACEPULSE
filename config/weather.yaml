@@ -1,7 +1,7 @@
-﻿weather:
+weather:
   enabled: true
 
-  race_laps: 58
+  race_laps: 60
 
   phases:
     - name: DRY
@@ -56,7 +56,7 @@
 
     - name: DRYING_TRACK
       start_lap: 49
-      end_lap: 58
+      end_lap: 60
       rain_intensity: 0.00
       air_temperature_c: 24.0
       track_temperature_c: 30.0

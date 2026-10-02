@@ -1,4 +1,4 @@
-﻿lap_pace_delta:
+lap_pace_delta:
   kpi_id: KPI-001
   name: Lap Pace Delta
   description: "Difference between a car's current lap time and its rolling best lap time for the race so far."

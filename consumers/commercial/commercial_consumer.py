@@ -1,4 +1,4 @@
-"""
+﻿"""
 Commercial analytics consumer for business.fans and business.sponsors.
 
 KPIs:
@@ -10,7 +10,8 @@ The consumer keeps the raw business streams intact and persists derived
 rates for Grafana. Values are explicitly NULL-safe: no event is interpreted
 as zero activity.
 """
-from __future__ import annotations
+from __future__ import annotations
+import os
 import json
 import uuid
 from datetime import datetime
@@ -20,7 +21,7 @@ from engine.validation.gate import ValidationGate
 from engine.config.loader import get_config, start_config_watcher
 from engine.rules.severity_rules import evaluate_severity
 
-BOOTSTRAP="localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPICS=["business.fans","business.sponsors"]
 GROUP_ID="commercial-consumer"
 INSERT_SQL="""
@@ -99,3 +100,5 @@ def run():
         consumer.close(); producer.close()
 
 if __name__=="__main__": run()
+
+

@@ -1,10 +1,11 @@
-"""
+﻿"""
 Shared continuous race runner.
 
 One RaceSimulator feeds every stream so timing, tyres, weather, pit stops,
 incidents, fans and sponsors stay causally aligned during a live demo.
 """
-from __future__ import annotations
+from __future__ import annotations
+import os
 import argparse
 import json
 import time
@@ -21,7 +22,7 @@ from simulator.timing_event import build_timing_event
 from simulator.tyre_event import build_tyre_event
 from simulator.weather_event import build_weather_event
 
-BOOTSTRAP="localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPICS=("race.timing","race.telemetry","race.tyres","race.weather",
         "race.pitstops","race.incidents","business.fans","business.sponsors")
 
@@ -58,7 +59,7 @@ def publish_snapshot(producer, simulator):
     producer.flush()
     return count
 
-def run_live(scenario=ScenarioType.NORMAL_RACE,delay=1.0,max_laps=None,producer=None):
+def run_live(scenario=ScenarioType.NORMAL_RACE,delay=5.0,max_laps=None,producer=None):
     simulator=RaceSimulator(scenario=create_scenario(scenario))
     owns=producer is None
     producer=producer or create_producer()
@@ -74,9 +75,12 @@ def run_live(scenario=ScenarioType.NORMAL_RACE,delay=1.0,max_laps=None,producer=
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--scenario",default="NORMAL_RACE",choices=[s.value for s in ScenarioType])
-    p.add_argument("--delay",type=float,default=1.0)
+    p.add_argument("--delay",type=float,default=5.0)
     p.add_argument("--laps",type=int,default=None)
     a=p.parse_args()
     run_live(ScenarioType(a.scenario),a.delay,a.laps)
 
 if __name__=="__main__": main()
+
+
+

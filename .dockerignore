@@ -1,0 +1,13 @@
+﻿.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.vscode
+.idea
+*.log
+docker_backup_*
+grafana_data
+mysql_data

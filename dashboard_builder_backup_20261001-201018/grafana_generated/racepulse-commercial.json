@@ -1,0 +1,1000 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "COMMERCIAL INTELLIGENCE",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**SPORTS BUSINESS WORKSTATION**  \nFan engagement \u00e2\u20ac\u00a2 sponsor visibility \u00e2\u20ac\u00a2 conversion \u00e2\u20ac\u00a2 commercial momentum"
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "AVG ENGAGEMENT",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F5C451"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(ROUND(AVG(value)*100,2),0) AS value\nFROM commercial_results\nWHERE kpi_id='COM-001' AND $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "SPONSOR VISIBILITY",
+      "gridPos": {
+        "x": 4,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F5C451"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(ROUND(SUM(value),1),0) AS value\nFROM commercial_results\nWHERE kpi_id='COM-002' AND $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "AVG CONVERSION",
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F5C451"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(ROUND(AVG(value)*100,2),0) AS value\nFROM commercial_results\nWHERE kpi_id='COM-003' AND $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "COMMERCIAL EVENTS",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F5C451"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM commercial_results\nWHERE $__timeFilter(event_time)",
+          "format": "table"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "ACTIVE CARS",
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#36D399"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(DISTINCT car_id) AS value\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "CURRENT LAP",
+      "gridPos": {
+        "x": 20,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(MAX(lap_number),0) AS value\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "FAN ENGAGEMENT TREND",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time, car_id,\n       ROUND(value*100,2) AS engagement_pct\nFROM commercial_results\nWHERE kpi_id='COM-001'\n  AND $__timeFilter(event_time)\nORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "SPONSOR VISIBILITY",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "suffix:s",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time, entity_id AS sponsor_id,\n       ROUND(value,1) AS visibility_s\nFROM commercial_results\nWHERE kpi_id='COM-002'\n  AND $__timeFilter(event_time)\nORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "SPONSOR CONVERSION",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time, entity_id AS sponsor_id,\n       ROUND(value*100,2) AS conversion_pct\nFROM commercial_results\nWHERE kpi_id='COM-003'\n  AND $__timeFilter(event_time)\nORDER BY event_time",
+          "format": "time_series"
+        }
+      ],
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "AVERAGE SPEED // COMMERCIAL CONTEXT",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "kmh",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT window_start AS time, car_id,\n       ROUND(value,1) AS avg_speed_kmh\nFROM windowed_kpi_results\nWHERE kpi_id='KPI-003'\n  AND $__timeFilter(window_start)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY window_start",
+          "format": "time_series"
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "table",
+      "title": "SPONSOR SCORECARD",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT\n    entity_id AS sponsor,\n    ROUND(SUM(CASE WHEN kpi_id='COM-002' THEN value ELSE 0 END),1) AS visibility_s,\n    ROUND(AVG(CASE WHEN kpi_id='COM-003' THEN value END)*100,2) AS conversion_pct,\n    COUNT(CASE WHEN kpi_id='COM-001' THEN 1 END) AS engagement_events,\n    MAX(lap_number) AS latest_lap\nFROM commercial_results\nWHERE $__timeFilter(event_time)\nGROUP BY entity_id\nORDER BY visibility_s DESC\nLIMIT 12",
+          "format": "table"
+        }
+      ],
+      "id": 12
+    },
+    {
+      "type": "table",
+      "title": "COMMERCIAL ACTIVITY FEED",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time,\n       entity_id AS sponsor,\n       CASE kpi_id\n         WHEN 'COM-001' THEN 'FAN ENGAGEMENT'\n         WHEN 'COM-002' THEN 'SPONSOR VISIBILITY'\n         WHEN 'COM-003' THEN 'SPONSOR CONVERSION'\n         ELSE kpi_id\n       END AS metric,\n       ROUND(value,3) AS value,\n       unit\nFROM commercial_results\nWHERE $__timeFilter(event_time)\nORDER BY event_time DESC\nLIMIT 20",
+          "format": "table"
+        }
+      ],
+      "id": 13
+    },
+    {
+      "type": "table",
+      "title": "COMMERCIAL OPPORTUNITY CONTEXT",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT event_time AS time,\n       car_id AS car,\n       CASE kpi_id\n         WHEN 'STR-001' THEN 'TYRE DEGRADATION RISK'\n         WHEN 'STR-002' THEN 'PIT WINDOW SIGNAL'\n         ELSE kpi_id\n       END AS signal,\n       ROUND(value,2) AS value,\n       severity AS status,\n       message\nFROM strategy_results\nWHERE severity <> 'none'\n  AND $__timeFilter(event_time)\nORDER BY event_time DESC\nLIMIT 20",
+          "format": "table"
+        }
+      ],
+      "id": 14
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE",
+    "streaming",
+    "motorsport"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "RACEPULSE // Commercial Intelligence",
+  "uid": "racepulse-commercial",
+  "version": 1,
+  "description": "Commercial intelligence for fan and sponsor performance."
+}

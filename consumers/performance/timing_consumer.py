@@ -1,4 +1,5 @@
-﻿"""
+﻿import os
+"""
 Performance consumer - Parv's ownership.
 Reads race.timing, validates against the central ValidationGate,
 computes KPI-001 (Lap Pace Delta) and KPI-002 (Gap Trend) per car,
@@ -86,7 +87,7 @@ def main():
     consumer = KafkaConsumer(
         "race.timing",
         "race.incidents",
-        bootstrap_servers="localhost:9092",
+        bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
         group_id="performance-consumer",
         auto_offset_reset="earliest",
         enable_auto_commit=True,
@@ -117,3 +118,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

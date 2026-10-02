@@ -1,3 +1,4 @@
+﻿import os
 """
 Validation monitor - Navroop's ownership (engine/validation/).
 
@@ -22,7 +23,7 @@ from kafka import KafkaConsumer
 from engine.validation.gate import ValidationGate
 from engine.validation.schemas import SCHEMAS
 
-BOOTSTRAP = "localhost:9092"
+BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 GROUP_ID = "validation-monitor"
 POLL_TIMEOUT_MS = 5000
 
@@ -77,3 +78,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

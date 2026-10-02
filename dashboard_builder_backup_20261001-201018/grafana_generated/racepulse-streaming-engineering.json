@@ -1,0 +1,830 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "STREAMING ENGINEERING // MISSION CONTROL",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**PLATFORM HEALTH**  \nKafka \u00e2\u20ac\u00a2 consumers \u00e2\u20ac\u00a2 validation \u00e2\u20ac\u00a2 DLQ \u00e2\u20ac\u00a2 stale-stream monitoring"
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "MAX CONSUMER LAG",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#36D399"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(MAX(lag),0) AS value\nFROM stream_health\nWHERE $__timeFilter(observed_at)",
+          "format": "table"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "DLQ EVENTS",
+      "gridPos": {
+        "x": 4,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#EF4444"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM dlq_events\nWHERE $__timeFilter(failed_at)",
+          "format": "table"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "STALE STREAM ALERTS",
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F59E0B"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM infra_alerts\nWHERE (signal='STALE_STREAM' OR signal='SYS-STALE')\n  AND $__timeFilter(observed_at)",
+          "format": "table"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "CRITICAL INFRA ALERTS",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#EF4444"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(*) AS value\nFROM infra_alerts\nWHERE severity='critical' AND $__timeFilter(observed_at)",
+          "format": "table"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "ACTIVE CARS",
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#36D399"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COUNT(DISTINCT car_id) AS value\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "CURRENT LAP",
+      "gridPos": {
+        "x": 20,
+        "y": 4,
+        "w": 4,
+        "h": 4
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#22D3EE"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT COALESCE(MAX(lap_number),0) AS value\nFROM kpi_results\nWHERE $__timeFilter(event_time)\n  AND car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "format": "table"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "CONSUMER LAG",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT observed_at AS time, consumer_group, MAX(lag) AS lag\nFROM stream_health\nWHERE $__timeFilter(observed_at)\nGROUP BY observed_at, consumer_group\nORDER BY observed_at",
+          "format": "time_series"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "DLQ ACTIVITY",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#36D399",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 0.75
+              },
+              {
+                "color": "#EF4444",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "never",
+            "pointSize": 4,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT failed_at AS time, source_topic, COUNT(*) AS dlq_events\nFROM dlq_events\nWHERE $__timeFilter(failed_at)\nGROUP BY failed_at, source_topic\nORDER BY failed_at",
+          "format": "time_series"
+        }
+      ],
+      "id": 9
+    },
+    {
+      "type": "table",
+      "title": "CONSUMER HEALTH MATRIX",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 8
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT\n    consumer_group AS consumer,\n    MAX(lag) AS lag,\n    MAX(events_seen) AS events_seen,\n    SUBSTRING_INDEX(GROUP_CONCAT(status ORDER BY observed_at DESC), ',', 1) AS status,\n    MAX(last_event_at) AS last_event\nFROM stream_health\nWHERE $__timeFilter(observed_at)\nGROUP BY consumer_group\nORDER BY consumer_group",
+          "format": "table"
+        }
+      ],
+      "id": 10
+    },
+    {
+      "type": "table",
+      "title": "INFRASTRUCTURE ALERT FEED",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT observed_at AS time,\n       signal,\n       severity AS status,\n       component,\n       message\nFROM infra_alerts\nWHERE $__timeFilter(observed_at)\nORDER BY observed_at DESC\nLIMIT 30",
+          "format": "table"
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "table",
+      "title": "DATA QUALITY / DLQ FEED",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 9
+      },
+      "transparent": false,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E8EDF2"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E8EDF2",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "count"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mysql",
+            "uid": "racepulse-mysql"
+          },
+          "rawSql": "SELECT failed_at AS time,\n       source_topic AS topic,\n       raw_key,\n       errors\nFROM dlq_events\nWHERE $__timeFilter(failed_at)\nORDER BY failed_at DESC\nLIMIT 30",
+          "format": "table"
+        }
+      ],
+      "id": 12
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "RACEPULSE",
+    "streaming",
+    "motorsport"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "RACEPULSE // Streaming Engineering",
+  "uid": "racepulse-streaming-engineering",
+  "version": 1,
+  "description": "Streaming platform health, lag, validation and data-quality control room."
+}

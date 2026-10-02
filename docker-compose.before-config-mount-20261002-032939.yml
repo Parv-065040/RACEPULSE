@@ -1,0 +1,215 @@
+﻿services:
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: racepulse-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/bin/bash", "/init-topics.sh"]
+    volumes:
+      - ./docker/kafka-init/init-topics.sh:/init-topics.sh:ro
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: racepulse-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: racepulse-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  mysql:
+    image: mysql:8.0
+    container_name: racepulse-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-racepulse_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-racepulse}
+      MYSQL_USER: ${MYSQL_USER:-racepulse_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: racepulse-grafana
+    depends_on:
+      - mysql
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
+  strategy-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: racepulse-strategy-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-racepulse}
+      MYSQL_USER: ${MYSQL_USER:-racepulse_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
+    command:
+      - python
+      - consumers/strategy/strategy_consumer.py
+    restart: unless-stopped
+
+  performance-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: racepulse-performance-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-racepulse}
+      MYSQL_USER: ${MYSQL_USER:-racepulse_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
+    command:
+      - python
+      - consumers/performance/timing_consumer.py
+    restart: unless-stopped
+
+  race-control-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: racepulse-race-control-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-racepulse}
+      MYSQL_USER: ${MYSQL_USER:-racepulse_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
+    command:
+      - python
+      - consumers/race_control/race_control_consumer.py
+    restart: unless-stopped
+
+  commercial-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: racepulse-commercial-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-racepulse}
+      MYSQL_USER: ${MYSQL_USER:-racepulse_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
+    command:
+      - python
+      - consumers/commercial/commercial_consumer.py
+    restart: unless-stopped
+
+  windowed-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: racepulse-windowed-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-racepulse}
+      MYSQL_USER: ${MYSQL_USER:-racepulse_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-racepulse_pass}
+    command:
+      - python
+      - consumers/windowed/windowed_consumer.py
+    restart: unless-stopped
+
+  race-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: racepulse-race-simulator
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      RACE_SCENARIO: ${RACE_SCENARIO:-NORMAL_RACE}
+      RACE_LAPS: ${RACE_LAPS:-60}
+      RACE_DELAY: ${RACE_DELAY:-5}
+    command:
+      - python
+      - -m
+      - simulator.live_runner
+      - --scenario
+      - ${RACE_SCENARIO:-NORMAL_RACE}
+      - --laps
+      - ${RACE_LAPS:-60}
+      - --delay
+      - ${RACE_DELAY:-5}
+    restart: "no"
+
+volumes:
+  mysql_data:
+  grafana_data:
+
+
+
+
+

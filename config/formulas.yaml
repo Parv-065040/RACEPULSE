@@ -1,8 +1,8 @@
-strategy:
+﻿strategy:
   STR-001:
     name: Tyre Degradation Risk
-    formula: "degradation_per_lap*5 + grip_loss*2 + pace_delta_seconds*0.4 + track_wetness*0.5"
-    version: 1
+    formula: "degradation_per_lap*5 + grip_loss*2 + pace_delta_ratio*0.4 + track_wetness*0.5"
+    version: 2
   STR-002:
     name: Pit Window Signal
     formula: "min(1, strategy_risk/2 + pit_stop_bonus)"
@@ -29,3 +29,4 @@ commercial:
     name: Sponsor Conversion Rate
     formula: "conversions/max(1,clicks)"
     version: 1
+
