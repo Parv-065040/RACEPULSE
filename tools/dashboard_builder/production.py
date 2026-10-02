@@ -759,7 +759,7 @@ CURRENT_PACE_RANKING = q(f"""
     WHERE k.event_time BETWEEN race.race_start AND race.race_end
       AND k.lap_number BETWEEN 1 AND 60
       AND k.car_id REGEXP '{CAR_RE}'
-      AND k.car_id REGEXP '${car:regex}'
+      AND k.car_id REGEXP '${{car:regex}}'
 )
 SELECT car_id AS car, ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
 FROM ranked WHERE rn=1 ORDER BY pace_delta_s DESC
@@ -772,7 +772,7 @@ FROM kpi_results k CROSS JOIN race
 WHERE k.event_time BETWEEN race.race_start AND race.race_end
   AND k.lap_number BETWEEN 1 AND 60
   AND k.car_id REGEXP '{CAR_RE}'
-  AND k.car_id REGEXP '${car:regex}'
+  AND k.car_id REGEXP '${{car:regex}}'
 """)
 
 STRATEGY_RISK_RANKING = q(f"""
@@ -785,7 +785,7 @@ STRATEGY_RISK_RANKING = q(f"""
       AND s.event_time BETWEEN race.race_start AND race.race_end
       AND s.lap_number BETWEEN 1 AND 60
       AND s.car_id REGEXP '{CAR_RE}'
-      AND s.car_id REGEXP '${car:regex}'
+      AND s.car_id REGEXP '${{car:regex}}'
 )
 SELECT car_id AS car, ROUND(value,3) AS tyre_risk
 FROM ranked WHERE rn=1 ORDER BY tyre_risk DESC
@@ -799,7 +799,7 @@ WHERE rc.kpi_id='RC-002'
   AND rc.event_time BETWEEN race.race_start AND race.race_end
   AND rc.lap_number BETWEEN 1 AND 60
   AND rc.car_id REGEXP '{CAR_RE}'
-  AND rc.car_id REGEXP '${car:regex}'
+  AND rc.car_id REGEXP '${{car:regex}}'
 ORDER BY rc.event_time
 """)
 
