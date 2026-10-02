@@ -749,7 +749,23 @@ FROM commercial_results c CROSS JOIN race
 WHERE c.kpi_id='COM-002'
   AND c.event_time BETWEEN race.race_start AND race.race_end
   AND c.lap_number BETWEEN 1 AND 60
-  AND c.entity_id REGEXP '^SPONSOR_[0-9]+
+  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
+GROUP BY c.entity_id
+ORDER BY visibility_s DESC
+""")
+
+SPONSOR_CONVERSION_RANKING = q(f"""
+{RACE}
+SELECT c.entity_id AS sponsor, ROUND(AVG(c.value)*100,2) AS conversion_pct
+FROM commercial_results c CROSS JOIN race
+WHERE c.kpi_id='COM-003'
+  AND c.event_time BETWEEN race.race_start AND race.race_end
+  AND c.lap_number BETWEEN 1 AND 60
+  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
+GROUP BY c.entity_id
+ORDER BY conversion_pct DESC
+""")
+
 DLQ_COUNT = q("""
 SELECT COUNT(*) AS value FROM dlq_events
 WHERE failed_at >= DATE_SUB((SELECT MAX(failed_at) FROM dlq_events), INTERVAL 30 MINUTE)
