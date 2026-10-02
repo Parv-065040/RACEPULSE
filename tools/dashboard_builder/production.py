@@ -134,6 +134,20 @@ def table(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8) -> dict
     return p
 
 
+def bar(title: str, sql: str, x: int, y: int, w: int = 12, h: int = 8,
+        unit: str = "short", decimals: int = 1) -> dict[str, Any]:
+    p = base_panel(title, "barchart", x, y, w, h)
+    p["targets"] = [target(sql)]
+    p["fieldConfig"]["defaults"].update({"unit": unit, "decimals": decimals})
+    p["options"] = {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {"displayMode": "hidden"},
+        "tooltip": {"mode": "single"},
+    }
+    return p
+
+
 def text(title: str, content: str, x: int, y: int, w: int = 24, h: int = 4) -> dict[str, Any]:
     p = base_panel(title, "text", x, y, w, h)
     p["options"] = {"mode": "markdown", "content": content}
@@ -718,6 +732,29 @@ ORDER BY failed_at DESC LIMIT 30
 """)
 
 
+CURRENT_PACE_RANKING = q(f"""
+{RACE}
+,ranked AS (
+    SELECT k.car_id,
+           k.lap_time_ms,
+           MIN(k.lap_time_ms) OVER (PARTITION BY k.car_id) AS best_lap_ms,
+           ROW_NUMBER() OVER (
+               PARTITION BY k.car_id
+               ORDER BY k.event_time DESC, k.id DESC
+           ) AS rn
+    FROM kpi_results k CROSS JOIN race
+    WHERE k.event_time BETWEEN race.race_start AND race.race_end
+      AND k.lap_number BETWEEN 1 AND 60
+      AND k.car_id REGEXP '{CAR_RE}'
+      AND k.car_id REGEXP '${car:regex}'
+)
+SELECT car_id AS car,
+       ROUND((lap_time_ms-best_lap_ms)/1000.0,2) AS pace_delta_s
+FROM ranked
+WHERE rn=1
+ORDER BY pace_delta_s DESC
+""")
+
 def build_executive():
     panels = [
         text("RACEPULSE // CEO COMMAND CENTER",
@@ -779,6 +816,7 @@ def build_strategy():
         ts("Pit-Window Signal", PIT_WINDOW, 12, 8, 12, 8, "short", 2),
         table("12-Car Strategy Matrix", STRATEGY_MATRIX, 0, 16, 24, 9),
         table("Strategy Decision Feed", STRATEGY_FEED, 0, 25, 12, 9),
+        bar("Current Pace Delta // 12-Car Ranking", CURRENT_PACE_RANKING, 0, 42, 12, 8, "suffix:s", 2),
         table("Current Race Performance Context", CURRENT_CAR_STATUS, 12, 25, 12, 9),
     ]
     return dashboard("racepulse-strategy", "RACEPULSE // Strategy Intelligence",
