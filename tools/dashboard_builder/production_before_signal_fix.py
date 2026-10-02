@@ -422,7 +422,7 @@ SELECT s.event_time AS time,
            WHEN 'STR-001' THEN 'TYRE DEGRADATION RISK'
            WHEN 'STR-002' THEN 'PIT WINDOW SIGNAL'
            ELSE s.kpi_id
-       END AS `signal`,
+       END AS signal,
        ROUND(s.value,2) AS value,
        s.severity AS status,
        s.message
@@ -472,7 +472,7 @@ SELECT rc.event_time AS time,
            WHEN 'RC-001' THEN 'TRACK RISK'
            WHEN 'RC-002' THEN 'VEHICLE RISK'
            ELSE rc.kpi_id
-       END AS `signal`,
+       END AS signal,
        ROUND(rc.value,2) AS value,
        rc.severity AS status,
        rc.message
@@ -526,7 +526,7 @@ ORDER BY c.event_time DESC LIMIT 20
 ALERT_FEED = q(f"""
 SELECT a.created_at AS time,
        a.car_id AS car,
-       a.kpi_id AS `signal`,
+       a.kpi_id AS signal,
        a.severity AS status,
        a.message
 FROM alerts a
@@ -564,7 +564,7 @@ alert_rows AS (
 )
 SELECT event_time AS time,
        car_id AS car,
-       kpi_id AS `signal`,
+       kpi_id AS signal,
        pace_delta_s,
        status
 FROM alert_rows
@@ -695,7 +695,7 @@ WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 M
 
 INFRA_FEED = q("""
 SELECT created_at AS time,
-       kpi_id AS `signal`,
+       kpi_id AS signal,
        severity AS status,
        'Alert Monitor' AS component,
        message
@@ -881,5 +881,4 @@ if __name__ == "__main__":
     print("=" * 70)
     print("All production dashboards generated.")
     print("=" * 70)
-
 

@@ -368,7 +368,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(DISTINCT k.car_id) AS value FROM kpi_results k CROSS JOIN race\nWHERE k.event_time BETWEEN race.race_start AND race.race_end\n  AND k.lap_number BETWEEN 1 AND 60\n  AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(DISTINCT k.car_id) AS value FROM kpi_results k CROSS JOIN race\nWHERE k.event_time BETWEEN race.race_start AND race.race_end\n  AND k.lap_number BETWEEN 1 AND 60\n  AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n  AND k.car_id REGEXP '${car:regex}'",
           "format": "table"
         }
       ],
@@ -518,7 +518,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT c.event_time AS time, c.car_id, ROUND(c.value*100,2) AS engagement_pct\nFROM commercial_results c CROSS JOIN race\nWHERE c.kpi_id='COM-001'\n  AND c.event_time BETWEEN race.race_start AND race.race_end\n  AND c.lap_number BETWEEN 1 AND 60\n  AND c.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY c.event_time",
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT c.event_time AS time, c.car_id, ROUND(c.value*100,2) AS engagement_pct\nFROM commercial_results c CROSS JOIN race\nWHERE c.kpi_id='COM-001'\n  AND c.event_time BETWEEN race.race_start AND race.race_end\n  AND c.lap_number BETWEEN 1 AND 60\n  AND c.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n  AND c.car_id REGEXP '${car:regex}'\nORDER BY c.event_time",
           "format": "time_series"
         }
       ],
@@ -773,7 +773,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT w.window_start AS time, w.car_id,\n       ROUND(w.value,1) AS avg_speed_kmh\nFROM windowed_kpi_results w CROSS JOIN race\nWHERE w.kpi_id='KPI-003'\n  AND w.window_start BETWEEN race.race_start AND race.race_end\n  AND w.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\nORDER BY w.window_start",
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT w.window_start AS time, w.car_id,\n       ROUND(w.value,1) AS avg_speed_kmh\nFROM windowed_kpi_results w CROSS JOIN race\nWHERE w.kpi_id='KPI-003'\n  AND w.window_start BETWEEN race.race_start AND race.race_end\n  AND w.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n  AND w.car_id REGEXP '${car:regex}'\nORDER BY w.window_start",
           "format": "time_series"
         }
       ],
@@ -836,7 +836,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT c.entity_id AS sponsor,\n       ROUND(SUM(CASE WHEN c.kpi_id='COM-002' THEN c.value ELSE 0 END),1) AS visibility_s,\n       ROUND(AVG(CASE WHEN c.kpi_id='COM-003' THEN c.value END)*100,2) AS conversion_pct,\n       COUNT(CASE WHEN c.kpi_id='COM-001' THEN 1 END) AS engagement_events,\n       MAX(c.lap_number) AS latest_lap\nFROM commercial_results c CROSS JOIN race\nWHERE c.event_time BETWEEN race.race_start AND race.race_end\n  AND c.lap_number BETWEEN 1 AND 60\nGROUP BY c.entity_id ORDER BY visibility_s DESC LIMIT 12",
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT c.entity_id AS sponsor,\n       ROUND(SUM(CASE WHEN c.kpi_id='COM-002' THEN c.value ELSE 0 END),1) AS visibility_s,\n       ROUND(AVG(CASE WHEN c.kpi_id='COM-003' THEN c.value END)*100,2) AS conversion_pct,\n       COUNT(CASE WHEN c.kpi_id='COM-002' THEN 1 END) AS visibility_events,\n       MAX(c.lap_number) AS latest_lap\nFROM commercial_results c CROSS JOIN race\nWHERE c.event_time BETWEEN race.race_start AND race.race_end\n  AND c.lap_number BETWEEN 1 AND 60\n  AND c.kpi_id IN ('COM-002','COM-003')\n  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'\nGROUP BY c.entity_id\nORDER BY visibility_s DESC\nLIMIT 12",
           "format": "table"
         }
       ],
@@ -977,7 +977,35 @@
     "motorsport"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "car",
+        "label": "CAR",
+        "type": "query",
+        "query": "SELECT DISTINCT car_id FROM kpi_results WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$' ORDER BY car_id",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "severity",
+        "label": "SEVERITY",
+        "type": "custom",
+        "query": "all,critical,warning,none",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
   },
   "time": {
     "from": "now-30m",

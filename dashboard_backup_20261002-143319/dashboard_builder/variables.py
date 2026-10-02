@@ -1,11 +1,11 @@
-﻿"""Reusable Grafana dashboard variables."""
+"""Reusable Grafana dashboard variables."""
 
 def car_variable():
     return {
         "name": "car",
         "label": "CAR",
         "type": "query",
-        "query": "SELECT DISTINCT car_id FROM kpi_results WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$' ORDER BY car_id",
+        "query": "SELECT DISTINCT car_id FROM kpi_results ORDER BY car_id",
         "includeAll": True,
         "allValue": ".*",
         "multi": True,
@@ -38,4 +38,3 @@ def dashboard_variables():
         car_variable(),
         severity_variable(),
     ]
-

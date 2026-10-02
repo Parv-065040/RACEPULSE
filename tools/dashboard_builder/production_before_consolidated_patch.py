@@ -257,7 +257,7 @@ PACE = q(f"""
       AND k.lap_number BETWEEN 1 AND 60
       AND k.car_id REGEXP '{CAR_RE}'
       AND k.car_id REGEXP '${{car:regex}}'
-
+      AND ('$car' = '.*' OR k.car_id IN (${{car:sqlstring}}))
 )
 SELECT event_time AS time,
        car_id,
@@ -422,7 +422,7 @@ SELECT s.event_time AS time,
            WHEN 'STR-001' THEN 'TYRE DEGRADATION RISK'
            WHEN 'STR-002' THEN 'PIT WINDOW SIGNAL'
            ELSE s.kpi_id
-       END AS `signal`,
+       END AS signal,
        ROUND(s.value,2) AS value,
        s.severity AS status,
        s.message
@@ -472,23 +472,25 @@ SELECT rc.event_time AS time,
            WHEN 'RC-001' THEN 'TRACK RISK'
            WHEN 'RC-002' THEN 'VEHICLE RISK'
            ELSE rc.kpi_id
-       END AS `signal`,
+       END AS signal,
        ROUND(rc.value,2) AS value,
        rc.severity AS status,
        rc.message
 FROM race_control_results rc
 WHERE rc.severity <> 'none'
-  AND rc.car_id REGEXP '{CAR_RE}'
-  AND rc.car_id REGEXP '${{car:regex}}'
-  AND rc.severity REGEXP '${{severity:regex}}'
+  AND rc.event_time BETWEEN
+      DATE_SUB(
+          (SELECT MAX(k.event_time)
+           FROM kpi_results k
+           WHERE k.lap_number BETWEEN 1 AND 60
+             AND k.car_id REGEXP '{CAR_RE}'),
+          INTERVAL 10 MINUTE
+      )
+  AND (SELECT MAX(k.event_time)
+       FROM kpi_results k
+       WHERE k.lap_number BETWEEN 1 AND 60
+         AND k.car_id REGEXP '{CAR_RE}')
   AND rc.lap_number BETWEEN 1 AND 60
-  AND rc.event_time >= DATE_SUB(
-      (SELECT MAX(event_time)
-       FROM race_control_results
-       WHERE lap_number BETWEEN 1 AND 60
-         AND car_id REGEXP '{CAR_RE}'),
-      INTERVAL 10 MINUTE
-  )
 ORDER BY rc.event_time DESC
 LIMIT 20
 """)
@@ -498,16 +500,12 @@ COMMERCIAL_SCORECARD = q(f"""
 SELECT c.entity_id AS sponsor,
        ROUND(SUM(CASE WHEN c.kpi_id='COM-002' THEN c.value ELSE 0 END),1) AS visibility_s,
        ROUND(AVG(CASE WHEN c.kpi_id='COM-003' THEN c.value END)*100,2) AS conversion_pct,
-       COUNT(CASE WHEN c.kpi_id='COM-002' THEN 1 END) AS visibility_events,
+       COUNT(CASE WHEN c.kpi_id='COM-001' THEN 1 END) AS engagement_events,
        MAX(c.lap_number) AS latest_lap
 FROM commercial_results c CROSS JOIN race
 WHERE c.event_time BETWEEN race.race_start AND race.race_end
   AND c.lap_number BETWEEN 1 AND 60
-  AND c.kpi_id IN ('COM-002','COM-003')
-  AND c.entity_id REGEXP '^SPONSOR_[0-9]+$'
-GROUP BY c.entity_id
-ORDER BY visibility_s DESC
-LIMIT 12
+GROUP BY c.entity_id ORDER BY visibility_s DESC LIMIT 12
 """)
 
 COMMERCIAL_FEED = q(f"""
@@ -526,16 +524,25 @@ ORDER BY c.event_time DESC LIMIT 20
 ALERT_FEED = q(f"""
 SELECT a.created_at AS time,
        a.car_id AS car,
-       a.kpi_id AS `signal`,
+       a.kpi_id AS signal,
        a.severity AS status,
        a.message
 FROM alerts a
-WHERE a.created_at >= DATE_SUB(
-    (SELECT MAX(created_at) FROM alerts),
-    INTERVAL 10 MINUTE
-)
-  AND a.car_id REGEXP '${{car:regex}}'
-  AND a.severity REGEXP '${{severity:regex}}'
+WHERE a.created_at BETWEEN
+      DATE_SUB(
+          (SELECT MAX(k.event_time)
+           FROM kpi_results k
+           WHERE k.lap_number BETWEEN 1 AND 60
+             AND k.car_id REGEXP '{CAR_RE}'),
+          INTERVAL 10 MINUTE
+      )
+  AND DATE_ADD(
+          (SELECT MAX(k.event_time)
+           FROM kpi_results k
+           WHERE k.lap_number BETWEEN 1 AND 60
+             AND k.car_id REGEXP '{CAR_RE}'),
+          INTERVAL 10 MINUTE
+      )
 ORDER BY a.created_at DESC
 LIMIT 20
 """)
@@ -550,25 +557,18 @@ PERFORMANCE_ALERTS = q(f"""
       AND k.lap_number BETWEEN 1 AND 60
       AND k.car_id REGEXP '{CAR_RE}'
       AND k.car_id REGEXP '${{car:regex}}'
-),
-alert_rows AS (
-    SELECT event_time, car_id, kpi_id,
-           ROUND((lap_time_ms-current_best_lap_ms)/1000.0,2) AS pace_delta_s,
-           CASE
-               WHEN (lap_time_ms-current_best_lap_ms) >= 1500 THEN 'critical'
-               WHEN (lap_time_ms-current_best_lap_ms) >= 500 THEN 'warning'
-               ELSE 'none'
-           END AS status
-    FROM scoped
-    WHERE (lap_time_ms-current_best_lap_ms) >= 500
 )
 SELECT event_time AS time,
        car_id AS car,
-       kpi_id AS `signal`,
-       pace_delta_s,
-       status
-FROM alert_rows
-WHERE status REGEXP '${{severity:regex}}'
+       kpi_id AS signal,
+       ROUND((lap_time_ms-current_best_lap_ms)/1000.0,2) AS pace_delta_s,
+       CASE
+           WHEN (lap_time_ms-current_best_lap_ms) >= 1500 THEN 'critical'
+           WHEN (lap_time_ms-current_best_lap_ms) >= 500 THEN 'warning'
+           ELSE 'none'
+       END AS status
+FROM scoped
+WHERE (lap_time_ms-current_best_lap_ms) >= 500
 ORDER BY event_time DESC
 LIMIT 20
 """)
@@ -670,40 +670,10 @@ WHERE severity = 'critical'
   )
 """)
 # These tables are currently empty. Return an intentional empty result rather than inventing health data.
-STREAM_LAG_MAX = q("SELECT NULL AS value WHERE 1=0")
-
-LAG_TIMELINE = q("""
-SELECT created_at AS time,
-       COUNT(*) AS alert_events
-FROM alerts
-WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)
-GROUP BY created_at
-ORDER BY created_at
-""")
-
-HEALTH_MATRIX = q("""
-SELECT
-    'Alert Pipeline' AS consumer,
-    COUNT(*) AS events_seen,
-    SUM(CASE WHEN severity='critical' THEN 1 ELSE 0 END) AS critical_events,
-    SUM(CASE WHEN severity='warning' THEN 1 ELSE 0 END) AS warning_events,
-    MAX(created_at) AS last_event,
-    'ACTIVE' AS status
-FROM alerts
-WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)
-""")
-
-INFRA_FEED = q("""
-SELECT created_at AS time,
-       kpi_id AS `signal`,
-       severity AS status,
-       'Alert Monitor' AS component,
-       message
-FROM alerts
-WHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)
-ORDER BY created_at DESC
-LIMIT 20
-""")
+STREAM_LAG_MAX = q("SELECT NULL AS value")
+LAG_TIMELINE = q("SELECT NULL AS time, NULL AS consumer_group, NULL AS lag WHERE 1=0")
+HEALTH_MATRIX = q("SELECT NULL AS consumer, NULL AS lag, NULL AS events_seen, NULL AS status, NULL AS last_event WHERE 1=0")
+INFRA_FEED = q("SELECT NULL AS time, NULL AS signal, NULL AS status, NULL AS component, NULL AS message WHERE 1=0")
 DLQ_TIMELINE = q("""
 SELECT failed_at AS time, source_topic, COUNT(*) AS dlq_events
 FROM dlq_events
@@ -881,5 +851,10 @@ if __name__ == "__main__":
     print("=" * 70)
     print("All production dashboards generated.")
     print("=" * 70)
+
+
+
+
+
 
 

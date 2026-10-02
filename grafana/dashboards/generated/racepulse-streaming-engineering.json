@@ -108,7 +108,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "SELECT NULL AS value",
+          "rawSql": "SELECT NULL AS value WHERE 1=0",
           "format": "table"
         }
       ],
@@ -368,7 +368,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(DISTINCT k.car_id) AS value FROM kpi_results k CROSS JOIN race\nWHERE k.event_time BETWEEN race.race_start AND race.race_end\n  AND k.lap_number BETWEEN 1 AND 60\n  AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'",
+          "rawSql": "WITH race AS (\n    SELECT\n        MAX(event_time) AS race_end,\n        DATE_SUB(MAX(event_time), INTERVAL 10 MINUTE) AS race_start\n    FROM kpi_results\n    WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n      AND lap_number BETWEEN 1 AND 60\n)\n\nSELECT COUNT(DISTINCT k.car_id) AS value FROM kpi_results k CROSS JOIN race\nWHERE k.event_time BETWEEN race.race_start AND race.race_end\n  AND k.lap_number BETWEEN 1 AND 60\n  AND k.car_id REGEXP '^CAR_(0[1-9]|1[0-2])$'\n  AND k.car_id REGEXP '${car:regex}'",
           "format": "table"
         }
       ],
@@ -518,7 +518,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "SELECT NULL AS time, NULL AS consumer_group, NULL AS lag WHERE 1=0",
+          "rawSql": "SELECT created_at AS time,\n       COUNT(*) AS alert_events\nFROM alerts\nWHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)\nGROUP BY created_at\nORDER BY created_at",
           "format": "time_series"
         }
       ],
@@ -666,7 +666,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "SELECT NULL AS consumer, NULL AS lag, NULL AS events_seen, NULL AS status, NULL AS last_event WHERE 1=0",
+          "rawSql": "SELECT\n    'Alert Pipeline' AS consumer,\n    COUNT(*) AS events_seen,\n    SUM(CASE WHEN severity='critical' THEN 1 ELSE 0 END) AS critical_events,\n    SUM(CASE WHEN severity='warning' THEN 1 ELSE 0 END) AS warning_events,\n    MAX(created_at) AS last_event,\n    'ACTIVE' AS status\nFROM alerts\nWHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)",
           "format": "table"
         }
       ],
@@ -729,7 +729,7 @@
             "type": "mysql",
             "uid": "racepulse-mysql"
           },
-          "rawSql": "SELECT NULL AS time, NULL AS signal, NULL AS status, NULL AS component, NULL AS message WHERE 1=0",
+          "rawSql": "SELECT created_at AS time,\n       kpi_id AS `signal`,\n       severity AS status,\n       'Alert Monitor' AS component,\n       message\nFROM alerts\nWHERE created_at >= DATE_SUB((SELECT MAX(created_at) FROM alerts), INTERVAL 30 MINUTE)\nORDER BY created_at DESC\nLIMIT 20",
           "format": "table"
         }
       ],
@@ -807,7 +807,35 @@
     "motorsport"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "car",
+        "label": "CAR",
+        "type": "query",
+        "query": "SELECT DISTINCT car_id FROM kpi_results WHERE car_id REGEXP '^CAR_(0[1-9]|1[0-2])$' ORDER BY car_id",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "severity",
+        "label": "SEVERITY",
+        "type": "custom",
+        "query": "all,critical,warning,none",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
